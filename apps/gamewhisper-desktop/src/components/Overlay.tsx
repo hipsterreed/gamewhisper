@@ -280,13 +280,13 @@ function TranscriptArea({ userTranscript, agentTranscript, status }: TranscriptA
   if (status === 'idle' || status === 'connecting') return null
 
   return (
-    <div className="px-4 pb-2 space-y-1.5 max-h-24 overflow-hidden">
+    <div className="px-4 pb-2 space-y-1.5">
       {userTranscript && (
         <div className="flex gap-2 items-start">
           <span className="text-white/30 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">
             You
           </span>
-          <p className="text-white/70 text-xs leading-relaxed line-clamp-2">{userTranscript}</p>
+          <p className="text-white/70 text-xs leading-relaxed line-clamp-3">{userTranscript}</p>
         </div>
       )}
       {agentTranscript && (
@@ -294,7 +294,7 @@ function TranscriptArea({ userTranscript, agentTranscript, status }: TranscriptA
           <span className="text-blue-400/60 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">
             GW
           </span>
-          <p className="text-white/90 text-xs leading-relaxed line-clamp-2">{agentTranscript}</p>
+          <p className="text-white/90 text-xs leading-relaxed line-clamp-3">{agentTranscript}</p>
         </div>
       )}
     </div>

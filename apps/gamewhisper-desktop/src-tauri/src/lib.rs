@@ -165,7 +165,7 @@ fn handle_hotkey(app: &tauri::AppHandle) {
                 let x = state.overlay_position.lock().unwrap().clone(); x
             };
             if let Ok(Some(monitor)) = overlay.primary_monitor() {
-                let win_size = overlay.outer_size().unwrap_or(tauri::PhysicalSize { width: 480, height: 200 });
+                let win_size = overlay.outer_size().unwrap_or(tauri::PhysicalSize { width: 480, height: 320 });
                 let pos = compute_overlay_position(&monitor, win_size, &position);
                 let _ = overlay.set_position(pos);
             }
