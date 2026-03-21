@@ -149,6 +149,7 @@ fn handle_hotkey(app: &tauri::AppHandle) {
 
     if *visible {
         if let Some(overlay) = app.get_webview_window("overlay") {
+            let _ = overlay.emit("overlay-hide", "");
             let _ = overlay.hide();
         }
         *visible = false;

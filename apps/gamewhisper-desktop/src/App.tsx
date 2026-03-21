@@ -9,9 +9,7 @@ function App() {
   const initialize = useSettingsStore((s) => s.initialize)
 
   useEffect(() => {
-    if (!isOverlay) {
-      initialize()
-    }
+    initialize()
   }, [initialize])
 
   if (isOverlay) {
