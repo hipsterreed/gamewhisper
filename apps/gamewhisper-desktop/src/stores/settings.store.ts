@@ -9,6 +9,8 @@ interface SettingsState {
   overlayPosition: OverlayPosition
   elevenLabsAgentId: string
   elevenLabsApiKey: string
+  micDeviceId: string
+  outputDeviceId: string
   initialized: boolean
 
   initialize: () => Promise<void>
@@ -16,6 +18,7 @@ interface SettingsState {
   setOverlayTransparent: (transparent: boolean) => Promise<void>
   setOverlayPosition: (position: OverlayPosition) => Promise<void>
   setElevenLabsConfig: (agentId: string, apiKey: string) => Promise<void>
+  setAudioDevices: (micDeviceId: string, outputDeviceId: string) => Promise<void>
 }
 
 let _store: Store | null = null
@@ -41,6 +44,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   overlayPosition: 'center',
   elevenLabsAgentId: '',
   elevenLabsApiKey: '',
+  micDeviceId: '',
+  outputDeviceId: '',
   initialized: false,
 
   async initialize() {
@@ -52,7 +57,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const overlayPosition = (await store.get<OverlayPosition>('overlayPosition')) ?? 'center'
       const elevenLabsAgentId = (await store.get<string>('elevenLabsAgentId')) ?? ''
       const elevenLabsApiKey = (await store.get<string>('elevenLabsApiKey')) ?? ''
-      set({ hotkey, overlayTransparent, overlayPosition, elevenLabsAgentId, elevenLabsApiKey, initialized: true })
+      const micDeviceId = (await store.get<string>('micDeviceId')) ?? ''
+      const outputDeviceId = (await store.get<string>('outputDeviceId')) ?? ''
+      set({ hotkey, overlayTransparent, overlayPosition, elevenLabsAgentId, elevenLabsApiKey, micDeviceId, outputDeviceId, initialized: true })
     } catch {
       set({ initialized: true })
     }
@@ -76,5 +83,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   async setElevenLabsConfig(elevenLabsAgentId, elevenLabsApiKey) {
     set({ elevenLabsAgentId, elevenLabsApiKey })
     await persist({ elevenLabsAgentId, elevenLabsApiKey })
+  },
+
+  async setAudioDevices(micDeviceId, outputDeviceId) {
+    set({ micDeviceId, outputDeviceId })
+    await persist({ micDeviceId, outputDeviceId })
   },
 }))

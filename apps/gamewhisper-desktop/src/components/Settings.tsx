@@ -1,21 +1,60 @@
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useSettingsStore, type OverlayPosition } from '../stores/settings.store'
+
+interface AudioDevice {
+  deviceId: string
+  label: string
+}
 
 export function Settings() {
   const {
     hotkey,
     overlayTransparent,
     overlayPosition,
+    micDeviceId,
+    outputDeviceId,
     setHotkey,
     setOverlayTransparent,
     setOverlayPosition,
+    setAudioDevices,
   } = useSettingsStore()
 
   const [capturingHotkey, setCapturingHotkey] = useState(false)
   const [hotkeyError, setHotkeyError] = useState('')
   const captureRef = useRef<HTMLDivElement>(null)
+
+  const [micDevices, setMicDevices] = useState<AudioDevice[]>([])
+  const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
+
+  useEffect(() => {
+    async function loadDevices() {
+      try {
+        // Request mic permission briefly so labels are populated
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        stream.getTracks().forEach((t) => t.stop())
+      } catch {
+        // Permission denied — we'll still enumerate, just without labels
+      }
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const inputs = devices.filter((d) => d.kind === 'audioinput')
+        const outputs = devices.filter((d) => d.kind === 'audiooutput')
+        setMicDevices(inputs.map((d, i) => ({
+          deviceId: d.deviceId,
+          label: d.label || `Microphone ${i + 1}`,
+        })))
+        setOutputDevices(outputs.map((d, i) => ({
+          deviceId: d.deviceId,
+          label: d.label || `Speaker ${i + 1}`,
+        })))
+      } catch {
+        // enumerateDevices not available
+      }
+    }
+    loadDevices()
+  }, [])
 
   function handleHotkeyCapture(e: React.KeyboardEvent) {
     e.preventDefault()
@@ -116,6 +155,23 @@ export function Settings() {
           </Row>
         </Section>
 
+        <Section title="Audio">
+          <Row label="Microphone" hint="Input device for voice sessions">
+            <DeviceSelect
+              devices={micDevices}
+              value={micDeviceId}
+              onChange={(id) => setAudioDevices(id, outputDeviceId)}
+            />
+          </Row>
+          <Divider />
+          <Row label="Output" hint="Playback device for agent audio">
+            <DeviceSelect
+              devices={outputDevices}
+              value={outputDeviceId}
+              onChange={(id) => setAudioDevices(micDeviceId, id)}
+            />
+          </Row>
+        </Section>
 
       </div>
     </div>
@@ -197,5 +253,36 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
         }`}
       />
     </button>
+  )
+}
+
+function DeviceSelect({
+  devices,
+  value,
+  onChange,
+}: {
+  devices: AudioDevice[]
+  value: string
+  onChange: (deviceId: string) => void
+}) {
+  if (devices.length === 0) {
+    return <span className="text-xs text-white/25 italic">No devices found</span>
+  }
+  return (
+    <select
+      value={value || 'default'}
+      onChange={(e) => onChange(e.target.value === 'default' ? '' : e.target.value)}
+      className="text-xs rounded-md px-2.5 py-1.5 border border-white/12 bg-white/[0.06] text-white/80 hover:border-white/25 transition-all cursor-pointer outline-none focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/30"
+      style={{ maxWidth: 200 }}
+    >
+      <option value="default" style={{ background: '#0d0d1a' }}>System Default</option>
+      {devices
+        .filter((d) => d.deviceId !== 'default' && d.deviceId !== 'communications')
+        .map((d) => (
+          <option key={d.deviceId} value={d.deviceId} style={{ background: '#0d0d1a' }}>
+            {d.label}
+          </option>
+        ))}
+    </select>
   )
 }

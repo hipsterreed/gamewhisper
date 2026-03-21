@@ -8,7 +8,7 @@ const FALLBACK_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID ?? ''
 
 export function Overlay() {
   const [game, setGame] = useState<string | null>(null)
-  const { elevenLabsAgentId, initialized } = useSettingsStore()
+  const { elevenLabsAgentId, micDeviceId, outputDeviceId, initialized } = useSettingsStore()
   const el = useElevenLabs()
   const sessionActiveRef = useRef(false)
 
@@ -21,13 +21,13 @@ export function Overlay() {
       setGame(gameName || null)
       if (initialized && agentId) {
         sessionActiveRef.current = true
-        await el.startSession(gameName, agentId)
+        await el.startSession(gameName, agentId, micDeviceId || undefined, outputDeviceId || undefined)
       }
     })
     return () => {
       unlisten.then((fn) => fn())
     }
-  }, [initialized, agentId, el.startSession])
+  }, [initialized, agentId, micDeviceId, outputDeviceId, el.startSession])
 
   // End session when Rust hides the overlay (hotkey toggle off)
   useEffect(() => {

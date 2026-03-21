@@ -10,7 +10,7 @@ interface UseElevenLabsReturn {
   amplitude: number
   errorMessage: string | null
   sessionProgress: number
-  startSession: (gameName: string, agentId: string) => Promise<void>
+  startSession: (gameName: string, agentId: string, micDeviceId?: string, outputDeviceId?: string) => Promise<void>
   endSession: () => Promise<void>
 }
 
@@ -94,7 +94,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
   }, [stopAmplitudeMonitor, stopTimers])
 
   const startSession = useCallback(
-    async (gameName: string, agentId: string) => {
+    async (gameName: string, agentId: string, micDeviceId?: string, outputDeviceId?: string) => {
       if (conversationRef.current) await endSession()
 
       setStatus('connecting')
@@ -104,7 +104,10 @@ export function useElevenLabs(): UseElevenLabsReturn {
 
       try {
         // Separate mic stream for amplitude visualization
-        const vizStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+        const audioConstraint = micDeviceId
+          ? { deviceId: { exact: micDeviceId } }
+          : true
+        const vizStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraint, video: false })
         vizStreamRef.current = vizStream
         startAmplitudeMonitor(vizStream)
 
@@ -112,6 +115,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
           agentId,
           connectionType: 'websocket',
           dynamicVariables: { game_name: gameName || 'Unknown Game' },
+          ...(micDeviceId ? { inputDeviceId: micDeviceId } : {}),
+          ...(outputDeviceId ? { outputDeviceId } : {}),
 
           onConnect: () => {
             setStatus('listening')
@@ -175,7 +180,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
         stopTimers()
       }
     },
-    [endSession, startAmplitudeMonitor, stopAmplitudeMonitor, stopTimers],
+    [endSession, startAmplitudeMonitor, stopAmplitudeMonitor, stopTimers], // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   // Cleanup on unmount
