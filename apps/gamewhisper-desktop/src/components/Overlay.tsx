@@ -102,7 +102,7 @@ export function Overlay() {
       <div className="pb-4 pt-1 text-center">
         <p
           className={`text-xs tracking-[0.15em] uppercase transition-colors duration-300 ${
-            el.status === 'error' ? 'text-red-400/80' : 'text-white/40'
+            el.status === 'error' ? 'text-red-400/80' : el.status === 'searching' ? 'text-amber-400/70' : 'text-white/40'
           }`}
         >
           {statusLabel}
@@ -140,27 +140,34 @@ function VoiceOrb({ status, amplitude, sessionProgress }: VoiceOrbProps) {
   const isConnecting = status === 'connecting'
   const isListening = status === 'listening'
   const isSpeaking = status === 'speaking'
+  const isSearching = status === 'searching'
 
   // Orb color
   const orbColor = isError
     ? 'radial-gradient(circle at 35% 35%, rgba(239,68,68,0.9), rgba(185,28,28,0.8))'
     : isSpeaking
       ? 'radial-gradient(circle at 35% 35%, rgba(168,85,247,0.9), rgba(109,40,217,0.8))'
-      : 'radial-gradient(circle at 35% 35%, rgba(99,155,255,0.9), rgba(37,99,235,0.8))'
+      : isSearching
+        ? 'radial-gradient(circle at 35% 35%, rgba(251,191,36,0.9), rgba(217,119,6,0.8))'
+        : 'radial-gradient(circle at 35% 35%, rgba(99,155,255,0.9), rgba(37,99,235,0.8))'
 
   const glowColor = isError
     ? 'rgba(239,68,68,0.35)'
     : isSpeaking
       ? 'rgba(168,85,247,0.35)'
-      : 'rgba(59,130,246,0.35)'
+      : isSearching
+        ? 'rgba(251,191,36,0.35)'
+        : 'rgba(59,130,246,0.35)'
 
-  // Listening: scale orb by amplitude. Speaking: steady pulse.
-  const orbScale = isListening ? 1 + amplitude * 0.25 : isSpeaking ? undefined : 1
+  // Listening: scale orb by amplitude. Speaking: steady pulse. Searching: slow pulse.
+  const orbScale = isListening ? 1 + amplitude * 0.25 : isSpeaking || isSearching ? undefined : 1
   const orbAnimation = isConnecting
     ? 'orbPulse 2s ease-in-out infinite'
     : isSpeaking
       ? 'orbSpeak 1.2s ease-in-out infinite'
-      : undefined
+      : isSearching
+        ? 'orbPulse 1.8s ease-in-out infinite'
+        : undefined
 
   // Progress ring circumference for r=44
   const R = 44
@@ -237,6 +244,16 @@ function VoiceOrb({ status, amplitude, sessionProgress }: VoiceOrbProps) {
 }
 
 function OrbIcon({ status }: { status: SessionStatus }) {
+  if (status === 'searching') {
+    return (
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-90">
+        <circle cx="11" cy="11" r="6" stroke="white" strokeWidth="2" />
+        <path d="M16.5 16.5L21 21" stroke="white" strokeWidth="2" strokeLinecap="round" />
+        <path d="M11 8v3l2 2" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
   if (status === 'error') {
     return (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="opacity-90">
@@ -288,6 +305,22 @@ interface TranscriptAreaProps {
 
 function TranscriptArea({ userTranscript, agentTranscript, status }: TranscriptAreaProps) {
   if (status === 'idle' || status === 'connecting') return null
+  if (status === 'searching') {
+    return (
+      <div className="px-4 pb-2">
+        {userTranscript && (
+          <div className="flex gap-2 items-start mb-1.5">
+            <span className="text-white/30 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">You</span>
+            <p className="text-white/70 text-xs leading-relaxed line-clamp-3">{userTranscript}</p>
+          </div>
+        )}
+        <div className="flex gap-2 items-center">
+          <span className="text-amber-400/60 text-[10px] uppercase tracking-widest shrink-0">GW</span>
+          <p className="text-amber-300/70 text-xs tracking-wide">Searching wiki…</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="px-4 pb-2 space-y-1.5">
@@ -328,6 +361,8 @@ function getStatusLabel(
       return 'Listening…'
     case 'speaking':
       return 'Speaking…'
+    case 'searching':
+      return 'Searching wiki…'
     case 'error':
       return errorMessage ?? 'Error'
   }

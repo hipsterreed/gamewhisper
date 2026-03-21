@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
 
-export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'error'
+export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'searching' | 'error'
 
 interface UseElevenLabsReturn {
   status: SessionStatus
@@ -31,6 +31,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startTimeRef = useRef<number>(0)
+  const searchingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const stopAmplitudeMonitor = useCallback(() => {
     if (animFrameRef.current) {
@@ -79,6 +80,10 @@ export function useElevenLabs(): UseElevenLabsReturn {
   }, [])
 
   const endSession = useCallback(async () => {
+    if (searchingTimerRef.current) {
+      clearTimeout(searchingTimerRef.current)
+      searchingTimerRef.current = null
+    }
     if (conversationRef.current) {
       try {
         await conversationRef.current.endSession()
@@ -121,7 +126,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
         const conversation = await Promise.race([Conversation.startSession({
           agentId,
           connectionType: 'websocket',
-          dynamicVariables: { game_name: gameName || 'Unknown Game' },
+          dynamicVariables: { game_name: gameName || 'Unknown Game', session_id: crypto.randomUUID() },
           ...(micDeviceId ? { inputDeviceId: micDeviceId } : {}),
           ...(outputDeviceId ? { outputDeviceId } : {}),
 
@@ -160,10 +165,19 @@ export function useElevenLabs(): UseElevenLabsReturn {
               setAgentTranscript(message.message)
             } else if (message.source === 'user') {
               setUserTranscript(message.message)
+              // Start a timer: if agent doesn't speak within 1.5s, assume tool call in flight
+              if (searchingTimerRef.current) clearTimeout(searchingTimerRef.current)
+              searchingTimerRef.current = setTimeout(() => {
+                setStatus((prev) => (prev === 'listening' ? 'searching' : prev))
+              }, 1500)
             }
           },
 
           onModeChange: (mode) => {
+            if (searchingTimerRef.current) {
+              clearTimeout(searchingTimerRef.current)
+              searchingTimerRef.current = null
+            }
             if (mode.mode === 'speaking') {
               setStatus('speaking')
             } else if (mode.mode === 'listening') {
