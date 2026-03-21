@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useSettingsStore, type OverlayPosition } from '../stores/settings.store'
@@ -8,27 +8,14 @@ export function Settings() {
     hotkey,
     overlayTransparent,
     overlayPosition,
-    elevenLabsAgentId,
-    elevenLabsApiKey,
-    initialized,
     setHotkey,
     setOverlayTransparent,
     setOverlayPosition,
-    setElevenLabsConfig,
   } = useSettingsStore()
 
-  const [agentId, setAgentId] = useState('')
-  const [apiKey, setApiKey] = useState('')
   const [capturingHotkey, setCapturingHotkey] = useState(false)
   const [hotkeyError, setHotkeyError] = useState('')
   const captureRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (initialized) {
-      setAgentId(elevenLabsAgentId)
-      setApiKey(elevenLabsApiKey)
-    }
-  }, [initialized, elevenLabsAgentId, elevenLabsApiKey])
 
   function handleHotkeyCapture(e: React.KeyboardEvent) {
     e.preventDefault()
@@ -129,29 +116,6 @@ export function Settings() {
           </Row>
         </Section>
 
-        <Section title="ElevenLabs Voice">
-          <Row label="Agent ID" hint="From elevenlabs.io — required for voice features">
-            <input
-              type="text"
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              onBlur={() => setElevenLabsConfig(agentId, apiKey)}
-              placeholder="agent_xxxxxxxxxxxx"
-              className="w-48 px-2.5 py-1.5 bg-white/[0.06] border border-white/12 rounded-md text-xs text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-colors"
-            />
-          </Row>
-          <Divider />
-          <Row label="API Key" hint="Your ElevenLabs secret key">
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onBlur={() => setElevenLabsConfig(agentId, apiKey)}
-              placeholder="••••••••••••••••"
-              className="w-48 px-2.5 py-1.5 bg-white/[0.06] border border-white/12 rounded-md text-xs text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-colors"
-            />
-          </Row>
-        </Section>
 
       </div>
     </div>
