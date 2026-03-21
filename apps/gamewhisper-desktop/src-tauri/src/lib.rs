@@ -8,12 +8,57 @@ use tauri::{
     Emitter, Manager,
 };
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+use tauri_plugin_store::StoreExt;
 
 pub struct AppState {
     pub overlay_visible: Mutex<bool>,
     pub current_game: Mutex<Option<String>>,
     pub hotkey: Mutex<String>,
     pub overlay_position: Mutex<String>,
+}
+
+/// Convert a frontend hotkey string like "Alt+G" or "Control+Shift+F1"
+/// into a Shortcut. Single letters become KeyX codes; digits become DigitX.
+fn parse_hotkey_str(s: &str) -> Option<Shortcut> {
+    let parts: Vec<&str> = s.split('+').collect();
+    let key = parts.last()?;
+    let modifier_strs = &parts[..parts.len() - 1];
+
+    let mut modifiers = Modifiers::empty();
+    for m in modifier_strs {
+        match m.to_ascii_lowercase().as_str() {
+            "alt" => modifiers |= Modifiers::ALT,
+            "control" | "ctrl" => modifiers |= Modifiers::CONTROL,
+            "shift" => modifiers |= Modifiers::SHIFT,
+            "meta" | "super" => modifiers |= Modifiers::META,
+            _ => return None,
+        }
+    }
+
+    let code_str = if key.len() == 1 && key.chars().next()?.is_ascii_alphabetic() {
+        format!("Key{}", key.to_ascii_uppercase())
+    } else if key.len() == 1 && key.chars().next()?.is_ascii_digit() {
+        format!("Digit{}", key)
+    } else {
+        key.to_string()
+    };
+
+    let code: Code = code_str.parse().ok()?;
+    let mods = if modifiers.is_empty() { None } else { Some(modifiers) };
+    Some(Shortcut::new(mods, code))
+}
+
+fn register_hotkey(app: &tauri::AppHandle, hotkey: &str) -> Result<(), String> {
+    let shortcut = parse_hotkey_str(hotkey)
+        .ok_or_else(|| format!("Invalid hotkey: {hotkey}"))?;
+    app.global_shortcut()
+        .on_shortcut(shortcut, |app, _shortcut, event| {
+            if event.state() == ShortcutState::Released {
+                return;
+            }
+            handle_hotkey(app);
+        })
+        .map_err(|e| e.to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -33,6 +78,25 @@ pub fn run() {
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
+            // --- Load saved settings ---
+            let store = app.store("settings.json").ok();
+            let saved_hotkey = store
+                .as_ref()
+                .and_then(|s| s.get("hotkey"))
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+                .unwrap_or_else(|| "Alt+G".to_string());
+            let saved_position = store
+                .as_ref()
+                .and_then(|s| s.get("overlayPosition"))
+                .and_then(|v| v.as_str().map(|s| s.to_string()))
+                .unwrap_or_else(|| "center".to_string());
+
+            {
+                let state = app.state::<AppState>();
+                *state.hotkey.lock().unwrap() = saved_hotkey.clone();
+                *state.overlay_position.lock().unwrap() = saved_position;
+            }
+
             // --- System tray ---
             let show_item = MenuItem::with_id(app, "show-overlay", "Show Overlay", true, None::<&str>)?;
             let settings_item = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>)?;
@@ -57,14 +121,16 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // --- Global hotkey: Alt+G ---
-            let shortcut = Shortcut::new(Some(Modifiers::ALT), Code::KeyG);
-            app.global_shortcut().on_shortcut(shortcut, |app, _shortcut, event| {
-                if event.state() == ShortcutState::Released {
-                    return;
-                }
-                handle_hotkey(app);
-            })?;
+            // Remove DWM border on the settings window
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_shadow(false);
+            }
+
+            // --- Register saved hotkey ---
+            if let Err(e) = register_hotkey(app.handle(), &saved_hotkey) {
+                log::warn!("Failed to register saved hotkey '{saved_hotkey}': {e}, falling back to Alt+G");
+                let _ = register_hotkey(app.handle(), "Alt+G");
+            }
 
             Ok(())
         })
@@ -82,23 +148,19 @@ fn handle_hotkey(app: &tauri::AppHandle) {
     let mut visible = state.overlay_visible.lock().unwrap();
 
     if *visible {
-        // Dismiss overlay
         if let Some(overlay) = app.get_webview_window("overlay") {
             let _ = overlay.hide();
         }
         *visible = false;
     } else {
-        // Detect game
         let game = commands::game_detection::detect_active_game(app);
         {
             let mut current = state.current_game.lock().unwrap();
             *current = game.clone();
         }
 
-        // Show and position overlay
         if let Some(overlay) = app.get_webview_window("overlay") {
             let position = {
-                let state = app.state::<AppState>();
                 let x = state.overlay_position.lock().unwrap().clone(); x
             };
             if let Ok(Some(monitor)) = overlay.primary_monitor() {
@@ -108,8 +170,6 @@ fn handle_hotkey(app: &tauri::AppHandle) {
             }
 
             let _ = overlay.show();
-
-            // Emit game-detected event to overlay
             let payload = game.unwrap_or_else(|| "".to_string());
             let _ = overlay.emit("game-detected", payload);
         }
@@ -131,10 +191,10 @@ fn compute_overlay_position(
     const PAD: i32 = 24;
 
     match position {
-        "top-left"   => tauri::PhysicalPosition { x: mx + PAD,                y: my + PAD },
-        "top-center" => tauri::PhysicalPosition { x: mx + (mw - ww) / 2,     y: my + PAD },
-        "top-right"  => tauri::PhysicalPosition { x: mx + mw - ww - PAD,     y: my + PAD },
-        _            => tauri::PhysicalPosition { x: mx + (mw - ww) / 2,     y: my + (mh - wh) / 2 },
+        "top-left"   => tauri::PhysicalPosition { x: mx + PAD,            y: my + PAD },
+        "top-center" => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + PAD },
+        "top-right"  => tauri::PhysicalPosition { x: mx + mw - ww - PAD, y: my + PAD },
+        _            => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + (mh - wh) / 2 },
     }
 }
 
@@ -176,18 +236,14 @@ fn restart_as_admin(app: &tauri::AppHandle) {
 #[cfg(not(windows))]
 fn restart_as_admin(_app: &tauri::AppHandle) {}
 
-/// Called from the frontend when the user changes overlay position preference.
 #[tauri::command]
 fn set_overlay_position(app: tauri::AppHandle, position: String) {
     let state = app.state::<AppState>();
     *state.overlay_position.lock().unwrap() = position;
 }
 
-/// Called from the frontend when the user changes their hotkey in Settings.
 #[tauri::command]
 fn update_hotkey(app: tauri::AppHandle, hotkey: String) -> Result<(), String> {
-    use tauri_plugin_global_shortcut::GlobalShortcutExt;
-
     let state = app.state::<AppState>();
     let old = {
         let h = state.hotkey.lock().unwrap();
@@ -195,20 +251,12 @@ fn update_hotkey(app: tauri::AppHandle, hotkey: String) -> Result<(), String> {
     };
 
     // Unregister old shortcut
-    if let Ok(old_shortcut) = old.parse::<Shortcut>() {
+    if let Some(old_shortcut) = parse_hotkey_str(&old) {
         let _ = app.global_shortcut().unregister(old_shortcut);
     }
 
     // Register new shortcut
-    let new_shortcut: Shortcut = hotkey.parse().map_err(|e| format!("{e}"))?;
-    app.global_shortcut()
-        .on_shortcut(new_shortcut, |app, _shortcut, event| {
-            if event.state() == ShortcutState::Released {
-                return;
-            }
-            handle_hotkey(app);
-        })
-        .map_err(|e| e.to_string())?;
+    register_hotkey(&app, &hotkey)?;
 
     *state.hotkey.lock().unwrap() = hotkey;
     Ok(())

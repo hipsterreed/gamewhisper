@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { useSettingsStore, type OverlayPosition } from '../stores/settings.store'
 
 export function Settings() {
@@ -22,7 +23,6 @@ export function Settings() {
   const [hotkeyError, setHotkeyError] = useState('')
   const captureRef = useRef<HTMLDivElement>(null)
 
-  // Sync local state from store once initialized
   useEffect(() => {
     if (initialized) {
       setAgentId(elevenLabsAgentId)
@@ -33,13 +33,8 @@ export function Settings() {
   function handleHotkeyCapture(e: React.KeyboardEvent) {
     e.preventDefault()
     e.stopPropagation()
+    if (e.key === 'Escape') { setCapturingHotkey(false); return }
 
-    if (e.key === 'Escape') {
-      setCapturingHotkey(false)
-      return
-    }
-
-    // Build key combo string
     const parts: string[] = []
     if (e.altKey) parts.push('Alt')
     if (e.ctrlKey) parts.push('Control')
@@ -60,31 +55,44 @@ export function Settings() {
     }
   }
 
-  async function handleElevenLabsSave() {
-    await setElevenLabsConfig(agentId, apiKey)
-  }
-
-  if (!initialized) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-white/40 text-sm">Loading…</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="h-full overflow-y-auto bg-[#0d0d18] text-white">
-      <div className="max-w-lg mx-auto px-6 py-8 space-y-8">
-        {/* Header */}
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">GameWhisper Settings</h1>
-          <p className="text-white/40 text-sm mt-1">Configure your AI gaming companion</p>
+    <div
+      className="flex flex-col h-full rounded-2xl overflow-hidden select-none"
+      style={{ background: '#08080f' }}
+    >
+      {/* Invisible drag strip with floating window controls */}
+      <div data-tauri-drag-region className="relative shrink-0 h-10">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5">
+          <button
+            onClick={() => getCurrentWindow().minimize()}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white/70 hover:bg-white/10 transition-all"
+          >
+            <svg width="10" height="2" viewBox="0 0 10 2" fill="currentColor">
+              <rect width="10" height="1.5" rx="0.75" />
+            </svg>
+          </button>
+          <button
+            onClick={() => getCurrentWindow().close()}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white hover:bg-red-500/70 transition-all"
+          >
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="1" y1="1" x2="8" y2="8" />
+              <line x1="8" y1="1" x2="1" y2="8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-2 select-text">
+
+        <div className="pb-1">
+          <h1 className="text-lg font-semibold tracking-tight text-white/90">GameWhisper</h1>
+          <p className="text-xs text-white/35 mt-0.5 tracking-wide">Settings</p>
         </div>
 
-        {/* Hotkey */}
         <Section title="Hotkey">
-          <div className="space-y-2">
-            <label className="text-sm text-white/60">Global shortcut</label>
+          <Row label="Global shortcut" hint="Click then press your desired key combination">
             <div
               ref={captureRef}
               tabIndex={0}
@@ -92,74 +100,59 @@ export function Settings() {
               onClick={() => setCapturingHotkey(true)}
               onBlur={() => setCapturingHotkey(false)}
               className={`
-                inline-flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer select-none text-sm font-mono
+                inline-flex items-center px-3 py-1.5 rounded-md border cursor-pointer select-none text-xs font-mono transition-all
                 ${capturingHotkey
-                  ? 'border-blue-500 bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/40'
-                  : 'border-white/10 bg-white/5 text-white/80 hover:border-white/20'
+                  ? 'border-blue-500/70 bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/30'
+                  : 'border-white/12 bg-white/[0.06] text-white/80 hover:border-white/25 hover:bg-white/[0.09]'
                 }
               `}
             >
               {capturingHotkey ? 'Press keys…' : hotkey}
             </div>
-            {hotkeyError && <p className="text-red-400 text-xs">{hotkeyError}</p>}
-            <p className="text-white/30 text-xs">Click the badge then press your desired key combination</p>
-          </div>
+            {hotkeyError && <p className="text-red-400 text-xs mt-1">{hotkeyError}</p>}
+          </Row>
         </Section>
 
-        {/* Display */}
-        <Section title="Display">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-white/80">Transparent overlay</p>
-                <p className="text-xs text-white/30 mt-0.5">Disable if overlay appears broken on your GPU</p>
-              </div>
-              <Toggle
-                enabled={overlayTransparent}
-                onChange={(v) => setOverlayTransparent(v)}
-              />
-            </div>
-            <div>
-              <p className="text-sm text-white/80 mb-2">Overlay position</p>
-              <PositionPicker
-                value={overlayPosition}
-                onChange={(pos) => {
-                  setOverlayPosition(pos)
-                  invoke('set_overlay_position', { position: pos })
-                }}
-              />
-            </div>
-          </div>
+        <Section title="Overlay">
+          <Row label="Position" hint="Where the overlay appears on screen">
+            <PositionPicker
+              value={overlayPosition}
+              onChange={(pos) => {
+                setOverlayPosition(pos)
+                invoke('set_overlay_position', { position: pos })
+              }}
+            />
+          </Row>
+          <Divider />
+          <Row label="Transparent background" hint="Disable if overlay looks broken on your GPU">
+            <Toggle enabled={overlayTransparent} onChange={(v) => setOverlayTransparent(v)} />
+          </Row>
         </Section>
 
-        {/* ElevenLabs */}
         <Section title="ElevenLabs Voice">
-          <p className="text-xs text-white/30 mb-4">Required for Stage 2 voice features</p>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm text-white/60 mb-1">Agent ID</label>
-              <input
-                type="text"
-                value={agentId}
-                onChange={(e) => setAgentId(e.target.value)}
-                onBlur={handleElevenLabsSave}
-                placeholder="agent_xxxxxxxxxxxx"
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-blue-500/60"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-white/60 mb-1">API Key</label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                onBlur={handleElevenLabsSave}
-                placeholder="••••••••••••••••"
-                className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-sm text-white placeholder-white/20 focus:outline-none focus:border-blue-500/60"
-              />
-            </div>
-          </div>
+          <Row label="Agent ID" hint="From elevenlabs.io — required for voice features">
+            <input
+              type="text"
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              onBlur={() => setElevenLabsConfig(agentId, apiKey)}
+              placeholder="agent_xxxxxxxxxxxx"
+              className="w-48 px-2.5 py-1.5 bg-white/[0.06] border border-white/12 rounded-md text-xs text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-colors"
+            />
+          </Row>
+          <Divider />
+          <Row label="API Key" hint="Your ElevenLabs secret key">
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onBlur={() => setElevenLabsConfig(agentId, apiKey)}
+              placeholder="••••••••••••••••"
+              className="w-48 px-2.5 py-1.5 bg-white/[0.06] border border-white/12 rounded-md text-xs text-white placeholder-white/20 focus:outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-colors"
+            />
+          </Row>
         </Section>
+
       </div>
     </div>
   )
@@ -167,37 +160,59 @@ export function Settings() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div>
-      <h2 className="text-xs font-semibold tracking-widest uppercase text-white/30 mb-3">{title}</h2>
-      <div className="bg-white/[0.04] border border-white/[0.07] rounded-xl p-4">
-        {children}
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{ border: '1px solid rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.03)' }}
+    >
+      <div
+        className="px-4 py-2"
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+      >
+        <span className="text-[10px] font-semibold tracking-widest uppercase text-white/30">{title}</span>
       </div>
+      <div>{children}</div>
     </div>
   )
 }
 
+function Row({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 px-4 py-3">
+      <div className="min-w-0">
+        <p className="text-sm text-white/80 leading-none">{label}</p>
+        {hint && <p className="text-xs text-white/30 mt-1 leading-snug">{hint}</p>}
+      </div>
+      <div className="shrink-0">{children}</div>
+    </div>
+  )
+}
+
+function Divider() {
+  return <div className="mx-4" style={{ height: 1, background: 'rgba(255,255,255,0.05)' }} />
+}
+
 const POSITIONS: { value: OverlayPosition; label: string; icon: string }[] = [
-  { value: 'top-left', label: 'Top Left', icon: '↖' },
+  { value: 'top-left',   label: 'Top Left',   icon: '↖' },
   { value: 'top-center', label: 'Top Center', icon: '↑' },
-  { value: 'top-right', label: 'Top Right', icon: '↗' },
-  { value: 'center', label: 'Center', icon: '⊕' },
+  { value: 'top-right',  label: 'Top Right',  icon: '↗' },
+  { value: 'center',     label: 'Center',     icon: '⊕' },
 ]
 
 function PositionPicker({ value, onChange }: { value: OverlayPosition; onChange: (v: OverlayPosition) => void }) {
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-1.5">
       {POSITIONS.map((p) => (
         <button
           key={p.value}
           onClick={() => onChange(p.value)}
-          className={`flex-1 flex flex-col items-center gap-1 py-2 px-3 rounded-lg border text-xs transition-colors ${
+          className={`flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-md border text-[10px] transition-all ${
             value === p.value
-              ? 'border-blue-500 bg-blue-500/15 text-blue-300'
-              : 'border-white/10 bg-white/[0.03] text-white/40 hover:border-white/20 hover:text-white/60'
+              ? 'border-blue-500/70 bg-blue-500/15 text-blue-300'
+              : 'border-white/10 bg-white/[0.03] text-white/35 hover:border-white/20 hover:text-white/60'
           }`}
         >
-          <span className="text-base leading-none">{p.icon}</span>
-          <span>{p.label}</span>
+          <span className="text-sm leading-none">{p.icon}</span>
+          <span className="whitespace-nowrap">{p.label}</span>
         </button>
       ))}
     </div>
@@ -208,13 +223,13 @@ function Toggle({ enabled, onChange }: { enabled: boolean; onChange: (v: boolean
   return (
     <button
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        enabled ? 'bg-blue-500' : 'bg-white/20'
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+        enabled ? 'bg-blue-500' : 'bg-white/15'
       }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          enabled ? 'translate-x-6' : 'translate-x-1'
+        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+          enabled ? 'translate-x-[18px]' : 'translate-x-[3px]'
         }`}
       />
     </button>
