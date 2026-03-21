@@ -6,4 +6,6 @@ node_modules/
 # Claude Code local settings
 .claude/
 
-.env
+**/.env
+**/.env.local
+**/.env.*.local
