@@ -10,6 +10,7 @@ interface UseElevenLabsReturn {
   amplitude: number
   errorMessage: string | null
   sessionProgress: number
+  sessionTimedOut: boolean
   startSession: (gameName: string, agentId: string, micDeviceId?: string, outputDeviceId?: string) => Promise<void>
   endSession: () => Promise<void>
 }
@@ -21,6 +22,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const [amplitude, setAmplitude] = useState(0)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [sessionProgress, setSessionProgress] = useState(0)
+  const [sessionTimedOut, setSessionTimedOut] = useState(false)
 
   const conversationRef = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null)
   const animFrameRef = useRef<number>(0)
@@ -91,6 +93,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
     setUserTranscript('')
     setAgentTranscript('')
     setErrorMessage(null)
+    setSessionTimedOut(false)
   }, [stopAmplitudeMonitor, stopTimers])
 
   const startSession = useCallback(
@@ -111,7 +114,11 @@ export function useElevenLabs(): UseElevenLabsReturn {
         vizStreamRef.current = vizStream
         startAmplitudeMonitor(vizStream)
 
-        const conversation = await Conversation.startSession({
+        const connectTimeout = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('Connection timed out')), 10_000),
+        )
+
+        const conversation = await Promise.race([Conversation.startSession({
           agentId,
           connectionType: 'websocket',
           dynamicVariables: { game_name: gameName || 'Unknown Game' },
@@ -122,9 +129,17 @@ export function useElevenLabs(): UseElevenLabsReturn {
             setStatus('listening')
             startTimeRef.current = Date.now()
 
-            // 60-second session timeout
+            // 60-second session timeout — show message, Overlay handles auto-hide
             timeoutRef.current = setTimeout(() => {
-              endSession()
+              setErrorMessage('Session timed out')
+              setStatus('error')
+              setSessionTimedOut(true)
+              stopAmplitudeMonitor()
+              stopTimers()
+              if (conversationRef.current) {
+                conversationRef.current.endSession().catch(() => {})
+                conversationRef.current = null
+              }
             }, 60_000)
 
             // Progress ring updates every 500ms
@@ -163,7 +178,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             stopAmplitudeMonitor()
             stopTimers()
           },
-        })
+        }), connectTimeout])
 
         conversationRef.current = conversation
       } catch (err) {
@@ -171,9 +186,11 @@ export function useElevenLabs(): UseElevenLabsReturn {
         const friendly =
           msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')
             ? 'Microphone permission denied'
-            : msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')
-              ? 'Could not connect to ElevenLabs'
-              : msg
+            : msg.toLowerCase().includes('timed out') || msg.toLowerCase().includes('timeout')
+              ? 'Connection timed out'
+              : msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')
+                ? 'Could not connect to ElevenLabs'
+                : msg
         setErrorMessage(friendly)
         setStatus('error')
         stopAmplitudeMonitor()
@@ -198,6 +215,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
     amplitude,
     errorMessage,
     sessionProgress,
+    sessionTimedOut,
     startSession,
     endSession,
   }

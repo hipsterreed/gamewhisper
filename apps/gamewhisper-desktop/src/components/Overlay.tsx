@@ -40,6 +40,16 @@ export function Overlay() {
     }
   }, [el.endSession])
 
+  // Auto-hide 3s after session timeout
+  useEffect(() => {
+    if (!el.sessionTimedOut) return
+    const t = setTimeout(async () => {
+      await el.endSession()
+      getCurrentWindow().hide()
+    }, 3_000)
+    return () => clearTimeout(t)
+  }, [el.sessionTimedOut, el.endSession])
+
   // Escape key: end session + hide
   useEffect(() => {
     const handleKey = async (e: KeyboardEvent) => {
