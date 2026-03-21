@@ -131,9 +131,10 @@ fn compute_overlay_position(
     const PAD: i32 = 24;
 
     match position {
-        "top-left" => tauri::PhysicalPosition { x: mx + PAD, y: my + PAD },
-        "top-right" => tauri::PhysicalPosition { x: mx + mw - ww - PAD, y: my + PAD },
-        _ => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + (mh - wh) / 2 },
+        "top-left"   => tauri::PhysicalPosition { x: mx + PAD,                y: my + PAD },
+        "top-center" => tauri::PhysicalPosition { x: mx + (mw - ww) / 2,     y: my + PAD },
+        "top-right"  => tauri::PhysicalPosition { x: mx + mw - ww - PAD,     y: my + PAD },
+        _            => tauri::PhysicalPosition { x: mx + (mw - ww) / 2,     y: my + (mh - wh) / 2 },
     }
 }
 

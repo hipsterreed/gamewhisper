@@ -178,8 +178,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const POSITIONS: { value: OverlayPosition; label: string; icon: string }[] = [
   { value: 'top-left', label: 'Top Left', icon: '↖' },
-  { value: 'center', label: 'Center', icon: '⊕' },
+  { value: 'top-center', label: 'Top Center', icon: '↑' },
   { value: 'top-right', label: 'Top Right', icon: '↗' },
+  { value: 'center', label: 'Center', icon: '⊕' },
 ]
 
 function PositionPicker({ value, onChange }: { value: OverlayPosition; onChange: (v: OverlayPosition) => void }) {

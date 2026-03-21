@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { load, Store } from '@tauri-apps/plugin-store'
 
-export type OverlayPosition = 'center' | 'top-left' | 'top-right'
+export type OverlayPosition = 'center' | 'top-left' | 'top-center' | 'top-right'
 
 interface SettingsState {
   hotkey: string
