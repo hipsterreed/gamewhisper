@@ -1,0 +1,8 @@
+{
+  "eldenring.exe": { "name": "Elden Ring", "id": "elden-ring" },
+  "Cyberpunk2077.exe": { "name": "Cyberpunk 2077", "id": "cyberpunk-2077" },
+  "bg3.exe": { "name": "Baldur's Gate 3", "id": "bg3" },
+  "ELDEN RING": { "name": "Elden Ring", "id": "elden-ring" },
+  "Cyberpunk 2077": { "name": "Cyberpunk 2077", "id": "cyberpunk-2077" },
+  "Baldur's Gate 3": { "name": "Baldur's Gate 3", "id": "bg3" }
+}

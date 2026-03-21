@@ -1,0 +1,5 @@
+{
+  "name": "gamewhisper",
+  "private": true,
+  "workspaces": ["apps/*", "services/*"]
+}
