@@ -1,5 +1,6 @@
 import { useAuthStore } from '../stores/auth.store'
 import icon from '../assets/gamewhisper_icon_circle.png'
+import animationVideo from '../assets/gamewhisper_icon_animation.mp4'
 
 export function SignIn() {
   const { signIn, isSigningIn, error } = useAuthStore()
@@ -7,7 +8,7 @@ export function SignIn() {
   return (
     <div
       className="flex flex-col h-full rounded-2xl overflow-hidden select-none"
-      style={{ background: '#08080f' }}
+      style={{ background: '#060124' }}
     >
       {/* Title bar */}
       <div
@@ -23,6 +24,24 @@ export function SignIn() {
 
       {/* Sign-in content */}
       <div className="flex flex-1 flex-col items-center justify-center gap-6 px-8" style={{ paddingBottom: 40 }}>
+        {/* Title */}
+        <h1 className="text-white text-3xl font-bold tracking-tight">GameWhisper</h1>
+
+        {/* Icon animation */}
+        <video
+          src={animationVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            width: 240,
+            height: 240,
+            maskImage: 'radial-gradient(circle, black 50%, transparent 80%)',
+            WebkitMaskImage: 'radial-gradient(circle, black 50%, transparent 80%)',
+          }}
+        />
+
         <div className="flex flex-col items-center gap-1 text-center">
           <p className="text-white/80 text-base font-semibold">Sign in to get started</p>
         </div>
