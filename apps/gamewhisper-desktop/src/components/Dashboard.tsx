@@ -127,13 +127,15 @@ export function Dashboard() {
           {/* Settings nav item */}
           <button
             onClick={() => setView('settings')}
-            className={`w-full flex items-center gap-3 px-4 py-3 transition-colors ${
+            className={`w-full flex items-center gap-2.5 px-4 py-3 transition-colors ${
               view === 'settings'
                 ? 'bg-white/[0.07] text-white/70'
                 : 'text-white/40 hover:bg-white/[0.04] hover:text-white/60'
             }`}
           >
-            <GearIcon />
+            <div className="w-7 h-7 flex items-center justify-center shrink-0">
+              <GearIcon />
+            </div>
             <span className="text-sm font-medium">Settings</span>
           </button>
 
