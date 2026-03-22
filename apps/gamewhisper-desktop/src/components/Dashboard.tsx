@@ -11,7 +11,7 @@ type View = 'session' | 'settings'
 export function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<View>('session')
-  const { sessions, isLoading, hasMore, fetchMore } = useHistory()
+  const { sessions, isLoading, hasMore, fetchMore, deleteSession } = useHistory()
   const sentinelRef = useRef<HTMLDivElement>(null)
 
   // Auto-select latest session when list first loads
@@ -38,6 +38,16 @@ export function Dashboard() {
   function selectSession(id: string) {
     setSelectedId(id)
     setView('session')
+  }
+
+  async function handleDelete(e: React.MouseEvent, sessionId: string) {
+    e.stopPropagation()
+    const idx = sessions.findIndex((s) => s.sessionId === sessionId)
+    const ok = await deleteSession(sessionId)
+    if (ok && selectedId === sessionId) {
+      const next = sessions[idx + 1] ?? sessions[idx - 1] ?? null
+      setSelectedId(next?.sessionId ?? null)
+    }
   }
 
   return (
@@ -93,18 +103,29 @@ export function Dashboard() {
               </p>
             ) : (
               sessions.map((s) => (
-                <button
+                <div
                   key={s.sessionId}
-                  onClick={() => selectSession(s.sessionId)}
-                  className={`w-full text-left px-4 py-2.5 transition-colors ${
+                  className={`group relative flex items-center transition-colors ${
                     selectedId === s.sessionId && view === 'session'
                       ? 'bg-white/[0.07]'
                       : 'hover:bg-white/[0.04]'
                   }`}
                 >
-                  <p className="text-sm text-white/75 truncate">{s.gameName || 'Unknown Game'}</p>
-                  <p className="text-[11px] text-white/30 mt-0.5">{formatTime(s.startedAt)}</p>
-                </button>
+                  <button
+                    onClick={() => selectSession(s.sessionId)}
+                    className="flex-1 text-left px-4 py-2.5 min-w-0"
+                  >
+                    <p className="text-sm text-white/75 truncate">{s.gameName || 'Unknown Game'}</p>
+                    <p className="text-[11px] text-white/30 mt-0.5">{formatTime(s.startedAt)}</p>
+                  </button>
+                  <button
+                    onClick={(e) => handleDelete(e, s.sessionId)}
+                    title="Delete session"
+                    className="opacity-0 group-hover:opacity-100 shrink-0 mr-2 w-6 h-6 flex items-center justify-center rounded text-white/25 hover:text-red-400 hover:bg-red-500/15 transition-all"
+                  >
+                    <TrashIcon />
+                  </button>
+                </div>
               ))
             )}
 
@@ -239,6 +260,17 @@ function GearIcon() {
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="3" />
       <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+}
+
+function TrashIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
     </svg>
   )
 }

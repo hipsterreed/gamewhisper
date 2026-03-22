@@ -1,4 +1,5 @@
 import { useAuthStore } from '../stores/auth.store'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import icon from '../assets/gamewhisper_icon_circle.png'
 import animationVideo from '../assets/gamewhisper_icon_animation.mp4'
 
@@ -19,6 +20,17 @@ export function SignIn() {
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
           <img src={icon} alt="GameWhisper" className="w-5 h-5 rounded-md opacity-80" />
           <span className="text-sm font-semibold tracking-tight text-white/50">GameWhisper</span>
+        </div>
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          <button
+            onClick={() => getCurrentWindow().hide()}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white hover:bg-red-500/70 transition-all"
+          >
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="1" y1="1" x2="8" y2="8" />
+              <line x1="8" y1="1" x2="1" y2="8" />
+            </svg>
+          </button>
         </div>
       </div>
 

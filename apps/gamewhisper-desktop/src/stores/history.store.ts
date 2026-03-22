@@ -45,6 +45,7 @@ interface HistoryState {
   fetchInitial: (uid: string) => Promise<void>
   fetchMore: (uid: string) => Promise<void>
   prependSession: (session: FirestoreSession) => void
+  removeSession: (sessionId: string) => void
   reset: () => void
 }
 
@@ -104,6 +105,10 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
     set((state) => ({
       sessions: [session, ...state.sessions.filter((s) => s.sessionId !== session.sessionId)],
     }))
+  },
+
+  removeSession(sessionId: string) {
+    set((state) => ({ sessions: state.sessions.filter((s) => s.sessionId !== sessionId) }))
   },
 
   reset() {

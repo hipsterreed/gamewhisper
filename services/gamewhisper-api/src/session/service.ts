@@ -54,6 +54,20 @@ export abstract class SessionService {
     log('info', 'session/endSession: written', { uid, sessionId, messageCount: messages.length })
   }
 
+  static async deleteSession(uid: string, sessionId: string): Promise<void> {
+    if (!db) throw new AppError('Firebase not configured', 503, 'FIREBASE_UNAVAILABLE')
+
+    const ownerUid = await SessionService.lookupUid(sessionId)
+    if (!ownerUid) throw new AppError('Session not found', 404, 'SESSION_NOT_FOUND')
+    if (ownerUid !== uid) throw new AppError('Forbidden', 403, 'FORBIDDEN')
+
+    const batch = db.batch()
+    batch.delete(db.collection('users').doc(uid).collection('sessions').doc(sessionId))
+    batch.delete(db.collection('_sessionIndex').doc(sessionId))
+    await batch.commit()
+    log('info', 'session/deleteSession: deleted', { uid, sessionId })
+  }
+
   /** Fire-and-forget: appends tool call data to the session. Never throws. */
   static async recordToolCall(
     sessionId: string,

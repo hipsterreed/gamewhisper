@@ -47,3 +47,22 @@ export const sessionRoutes = new Elysia({ prefix: '/session' })
     },
     { body: SessionModel.endBody },
   )
+  .delete(
+    '/:sessionId',
+    async ({ uid, params, set }) => {
+      const { sessionId } = params
+      log('info', 'session/delete', { uid, sessionId })
+      try {
+        await SessionService.deleteSession(uid, sessionId)
+        return { ok: true }
+      } catch (err) {
+        log('error', 'session/delete failed', { err: String(err), sessionId })
+        if (err instanceof AppError && err.statusCode < 500) {
+          set.status = err.statusCode
+          return { error: err.message }
+        }
+        set.status = 500
+        return { error: 'Failed to delete session' }
+      }
+    },
+  )
