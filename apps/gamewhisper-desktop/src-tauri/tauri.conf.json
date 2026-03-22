@@ -40,6 +40,13 @@
       "csp": null
     }
   },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["gamewhisper"]
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",

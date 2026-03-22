@@ -7,6 +7,7 @@ use tauri::{
     tray::TrayIconBuilder,
     Emitter, Manager,
 };
+use tauri_plugin_deep_link::DeepLinkExt;
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use tauri_plugin_store::StoreExt;
 
@@ -77,7 +78,13 @@ pub fn run() {
         )
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(tauri_plugin_store::Builder::default().build())
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_deep_link::init())
         .setup(|app| {
+            // Register deep-link scheme in dev (installer handles it in production)
+            #[cfg(debug_assertions)]
+            app.deep_link().register("gamewhisper")?;
+
             // --- Load saved settings ---
             let store = app.store("settings.json").ok();
             let saved_hotkey = store
@@ -138,6 +145,7 @@ pub fn run() {
             commands::game_detection::detect_active_game_cmd,
             update_hotkey,
             set_overlay_position,
+            start_oauth_server,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -241,6 +249,42 @@ fn restart_as_admin(_app: &tauri::AppHandle) {}
 fn set_overlay_position(app: tauri::AppHandle, position: String) {
     let state = app.state::<AppState>();
     *state.overlay_position.lock().unwrap() = position;
+}
+
+/// Binds a one-shot HTTP server on a random loopback port, waits for the OAuth
+/// redirect, emits `oauth-callback` with the raw query string, then shuts down.
+#[tauri::command]
+fn start_oauth_server(window: tauri::Window) -> Result<u16, String> {
+    use std::io::{Read, Write};
+    use std::net::TcpListener;
+
+    let listener = TcpListener::bind("127.0.0.1:0").map_err(|e| e.to_string())?;
+    let port = listener.local_addr().map_err(|e| e.to_string())?.port();
+
+    std::thread::spawn(move || {
+        if let Ok((mut stream, _)) = listener.accept() {
+            let mut buf = vec![0u8; 8192];
+            if let Ok(n) = stream.read(&mut buf) {
+                let request = String::from_utf8_lossy(&buf[..n]).to_string();
+                // First line: "GET /?code=...&state=... HTTP/1.1"
+                if let Some(line) = request.lines().next() {
+                    let parts: Vec<&str> = line.split_whitespace().collect();
+                    if parts.len() >= 2 {
+                        window.emit("oauth-callback", parts[1].to_string()).ok();
+                    }
+                }
+            }
+            let body = b"<!DOCTYPE html><html><head><style>body{font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;background:#08080f;color:#fff;text-align:center}</style></head><body><h2>Signed in to GameWhisper</h2><p>You can close this tab.</p><script>window.close()</script></body></html>";
+            let response = format!(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                body.len()
+            );
+            let _ = stream.write_all(response.as_bytes());
+            let _ = stream.write_all(body);
+        }
+    });
+
+    Ok(port)
 }
 
 #[tauri::command]

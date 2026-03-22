@@ -1,21 +1,16 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capabilities for GameWhisper windows",
+  "description": "Default capabilities for all windows",
   "windows": ["main", "overlay"],
   "permissions": [
     "core:default",
-    "core:window:allow-show",
-    "core:window:allow-hide",
-    "core:window:allow-set-position",
-    "core:window:allow-minimize",
-    "core:window:allow-close",
-    "core:window:allow-start-dragging",
-    "global-shortcut:allow-register",
-    "global-shortcut:allow-unregister",
-    "store:allow-load",
-    "store:allow-set",
-    "store:allow-get",
-    "store:allow-save"
+    "store:default",
+    "global-shortcut:default",
+    "log:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://**" }]
+    },
+    "deep-link:default"
   ]
 }
