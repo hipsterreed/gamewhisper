@@ -29,7 +29,7 @@ export interface FirestoreSession {
   sessionId: string
   uid: string
   gameName: string | null
-  topic: string | null
+  topic?: string | null
   startedAt: number
   endedAt: number | null
   messages: SessionMessage[]
@@ -42,6 +42,7 @@ interface HistoryState {
   sessions: FirestoreSession[]
   isLoading: boolean
   hasMore: boolean
+  fetchError: string | null
   lastDoc: QueryDocumentSnapshot<DocumentData> | null
   fetchInitial: (uid: string) => Promise<void>
   fetchMore: (uid: string) => Promise<void>
@@ -54,10 +55,11 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   sessions: [],
   isLoading: false,
   hasMore: true,
+  fetchError: null,
   lastDoc: null,
 
   async fetchInitial(uid: string) {
-    set({ isLoading: true, sessions: [], lastDoc: null, hasMore: true })
+    set({ isLoading: true, sessions: [], lastDoc: null, hasMore: true, fetchError: null })
     try {
       const q = query(
         collection(db, 'users', uid, 'sessions'),
@@ -70,6 +72,7 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
       set({ sessions, lastDoc, hasMore: snap.docs.length === PAGE_SIZE })
     } catch (err) {
       console.error('history/fetchInitial failed:', err)
+      set({ fetchError: String(err) })
     } finally {
       set({ isLoading: false })
     }

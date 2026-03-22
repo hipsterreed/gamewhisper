@@ -8,7 +8,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'https://api.gamewhisper.io'
 
 export function useHistory() {
   const user = useAuthStore((s) => s.user)
-  const { sessions, isLoading, hasMore, fetchInitial, fetchMore, removeSession, reset } = useHistoryStore()
+  const { sessions, isLoading, hasMore, fetchError, fetchInitial, fetchMore, removeSession, reset } = useHistoryStore()
 
   useEffect(() => {
     if (user) {
@@ -43,6 +43,7 @@ export function useHistory() {
     sessions,
     isLoading,
     hasMore,
+    fetchError,
     fetchMore: () => { if (user) fetchMore(user.uid) },
     deleteSession,
   }

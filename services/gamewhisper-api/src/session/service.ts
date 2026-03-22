@@ -74,7 +74,10 @@ export abstract class SessionService {
 
     try {
       const uid = await SessionService.lookupUid(sessionId)
-      if (!uid) return
+      if (!uid) {
+        log('warn', 'session/setTopic: sessionId not in index — session/start may not have been called', { sessionId })
+        return
+      }
 
       await db
         .collection('users')

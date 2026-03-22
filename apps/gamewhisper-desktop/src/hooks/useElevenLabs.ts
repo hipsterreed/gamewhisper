@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
-import { setDoc, doc } from 'firebase/firestore'
+import { setDoc, getDoc, doc } from 'firebase/firestore'
 import { auth } from '../lib/firebase'
 import { db } from '../lib/firebase'
 import { useSessionsStore } from '../stores/sessions.store'
@@ -145,7 +145,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
         messages: [...messages],
         toolCalls: [],
       })
-      // Write directly to Firestore so history is available in all windows
+      // Write directly to Firestore so history is available in all windows,
+      // then re-fetch to pick up server-written fields (topic, toolCalls).
       if (uid) {
         setDoc(
           doc(db, 'users', uid, 'sessions', sessionId),
@@ -158,7 +159,13 @@ export function useElevenLabs(): UseElevenLabsReturn {
             messages: [...messages],
           },
           { merge: true },
-        ).catch(() => {})
+        ).then(async () => {
+          const snap = await getDoc(doc(db, 'users', uid, 'sessions', sessionId))
+          if (snap.exists()) {
+            const fresh = { toolCalls: [], ...snap.data() } as unknown as import('../stores/history.store').FirestoreSession
+            useHistoryStore.getState().prependSession(fresh)
+          }
+        }).catch(() => {})
       }
       const token = await getIdToken()
       if (token) {
