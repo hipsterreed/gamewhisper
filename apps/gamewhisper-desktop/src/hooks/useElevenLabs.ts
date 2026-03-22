@@ -30,6 +30,7 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'https://api.gamewhisper.io'
 
 async function getIdToken(): Promise<string | null> {
   try {
+    await auth.authStateReady()
     return (await auth.currentUser?.getIdToken()) ?? null
   } catch {
     return null
