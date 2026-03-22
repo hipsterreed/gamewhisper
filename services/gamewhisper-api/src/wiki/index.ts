@@ -19,7 +19,7 @@ export const wikiRoutes = new Elysia({ prefix: '/wiki' })
       try {
         const { text, sources } = await WikiService.search(game, query)
         const toolCallDurationMs = Date.now() - t0
-        log('info', 'wiki/search complete', { game, toolCallDurationMs, sourceCount: sources.length })
+        log('info', 'wiki/search complete', { game, query, toolCallDurationMs, sourceCount: sources.length, sources, responseText: text.slice(0, 1_000) })
 
         if (sessionId) {
           SessionService.recordToolCall(sessionId, query, sources, toolCallDurationMs, false).catch((err) =>
@@ -30,7 +30,7 @@ export const wikiRoutes = new Elysia({ prefix: '/wiki' })
         return { result: text, toolCallDurationMs, preprocessed: false }
       } catch (err) {
         const toolCallDurationMs = Date.now() - t0
-        log('error', 'wiki/search failed', { err: String(err), toolCallDurationMs })
+        log('error', 'wiki/search failed', { err: String(err), game, query, toolCallDurationMs })
 
         if (err instanceof AppError && err.statusCode < 500) {
           return { result: err.message, toolCallDurationMs, preprocessed: false }
