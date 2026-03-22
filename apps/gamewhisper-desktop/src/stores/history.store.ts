@@ -116,6 +116,6 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   reset() {
-    set({ sessions: [], isLoading: false, hasMore: true, lastDoc: null })
+    set({ sessions: [], isLoading: false, hasMore: true, lastDoc: null, fetchError: null })
   },
 }))

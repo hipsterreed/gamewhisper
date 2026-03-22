@@ -73,11 +73,12 @@ export function Dashboard() {
 
         {/* Session list */}
         <div className="flex-1 overflow-y-auto">
-          {fetchError ? (
+          {fetchError && sessions.length === 0 && (
             <p className="px-4 py-2 text-xs text-red-400/70 leading-snug" title={fetchError}>
               Failed to load sessions
             </p>
-          ) : sessions.length === 0 && !isLoading ? (
+          )}
+          {!fetchError && sessions.length === 0 && !isLoading ? (
             <p className="px-4 py-2 text-xs text-white/20 italic leading-snug">
               Sessions will appear here after using the overlay
             </p>
