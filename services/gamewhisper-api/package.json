@@ -3,7 +3,8 @@
   "version": "1.0.50",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
-    "start": "bun run src/index.ts"
+    "start": "bun run src/index.ts",
+    "test": "bun test --env-file .env"
   },
   "dependencies": {
     "@mendable/firecrawl-js": "^4.16.0",
