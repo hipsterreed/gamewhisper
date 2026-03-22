@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useSettingsStore } from './stores/settings.store'
 import { Overlay } from './components/Overlay'
-import { Settings } from './components/Settings'
+import { Dashboard } from './components/Dashboard'
 
 const isOverlay = window.location.hash === '#overlay'
 
@@ -16,7 +16,7 @@ function App() {
     return <Overlay />
   }
 
-  return <Settings />
+  return <Dashboard />
 }
 
 export default App

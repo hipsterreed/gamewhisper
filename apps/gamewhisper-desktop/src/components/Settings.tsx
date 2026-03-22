@@ -10,6 +10,48 @@ interface AudioDevice {
 }
 
 export function Settings() {
+  return (
+    <div
+      className="flex flex-col h-full rounded-2xl overflow-hidden select-none"
+      style={{ background: '#08080f' }}
+    >
+      {/* Invisible drag strip with floating window controls */}
+      <div data-tauri-drag-region className="relative shrink-0 h-10">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5">
+          <button
+            onClick={() => getCurrentWindow().minimize()}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white/70 hover:bg-white/10 transition-all"
+          >
+            <svg width="10" height="2" viewBox="0 0 10 2" fill="currentColor">
+              <rect width="10" height="1.5" rx="0.75" />
+            </svg>
+          </button>
+          <button
+            onClick={() => getCurrentWindow().close()}
+            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white hover:bg-red-500/70 transition-all"
+          >
+            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="1" y1="1" x2="8" y2="8" />
+              <line x1="8" y1="1" x2="1" y2="8" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-5 pb-5 pt-2 space-y-2 select-text">
+          <div className="pb-1">
+            <h1 className="text-lg font-semibold tracking-tight text-white/90">GameWhisper</h1>
+            <p className="text-xs text-white/35 mt-0.5 tracking-wide">Settings</p>
+          </div>
+          <SettingsContent />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function SettingsContent() {
   const {
     hotkey,
     overlayTransparent,
@@ -34,7 +76,6 @@ export function Settings() {
   useEffect(() => {
     async function loadDevices() {
       try {
-        // Request mic permission briefly so labels are populated
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
         stream.getTracks().forEach((t) => t.stop())
       } catch {
@@ -85,133 +126,97 @@ export function Settings() {
   }
 
   return (
-    <div
-      className="flex flex-col h-full rounded-2xl overflow-hidden select-none"
-      style={{ background: '#08080f' }}
-    >
-      {/* Invisible drag strip with floating window controls */}
-      <div data-tauri-drag-region className="relative shrink-0 h-10">
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5">
-          <button
-            onClick={() => getCurrentWindow().minimize()}
-            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white/70 hover:bg-white/10 transition-all"
+    <div className="space-y-2">
+      <Section title="Account">
+        {authLoading ? (
+          <div className="px-4 py-3">
+            <p className="text-sm text-white/30">Loading…</p>
+          </div>
+        ) : user ? (
+          <Row
+            label={user.displayName ?? user.email ?? 'Signed in'}
+            hint={user.displayName ? (user.email ?? '') : ''}
           >
-            <svg width="10" height="2" viewBox="0 0 10 2" fill="currentColor">
-              <rect width="10" height="1.5" rx="0.75" />
-            </svg>
-          </button>
-          <button
-            onClick={() => getCurrentWindow().close()}
-            className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white hover:bg-red-500/70 transition-all"
+            <button
+              onClick={signOut}
+              className="text-xs px-3 py-1.5 rounded-md border border-white/12 bg-white/[0.06] text-white/60 hover:text-white/90 hover:border-white/25 transition-all"
+            >
+              Sign out
+            </button>
+          </Row>
+        ) : (
+          <div className="px-4 py-3 flex flex-col gap-2">
+            <button
+              onClick={signIn}
+              disabled={isSigningIn}
+              className="flex items-center justify-center gap-2.5 w-full py-2 px-4 rounded-lg border border-white/12 bg-white/[0.06] text-sm text-white/80 hover:bg-white/[0.10] hover:border-white/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSigningIn ? (
+                <span className="text-white/50">Waiting for sign-in…</span>
+              ) : (
+                <><GoogleIcon />Sign in with Google</>
+              )}
+            </button>
+            {authError && <p className="text-xs text-red-400 text-center">{authError}</p>}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Hotkey">
+        <Row label="Global shortcut" hint="Click then press your desired key combination">
+          <div
+            ref={captureRef}
+            tabIndex={0}
+            onKeyDown={capturingHotkey ? handleHotkeyCapture : undefined}
+            onClick={() => setCapturingHotkey(true)}
+            onBlur={() => setCapturingHotkey(false)}
+            className={`
+              inline-flex items-center px-3 py-1.5 rounded-md border cursor-pointer select-none text-xs font-mono transition-all
+              ${capturingHotkey
+                ? 'border-blue-500/70 bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/30'
+                : 'border-white/12 bg-white/[0.06] text-white/80 hover:border-white/25 hover:bg-white/[0.09]'
+              }
+            `}
           >
-            <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="1" y1="1" x2="8" y2="8" />
-              <line x1="8" y1="1" x2="1" y2="8" />
-            </svg>
-          </button>
-        </div>
-      </div>
+            {capturingHotkey ? 'Press keys…' : hotkey}
+          </div>
+          {hotkeyError && <p className="text-red-400 text-xs mt-1">{hotkeyError}</p>}
+        </Row>
+      </Section>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto px-5 pb-5 space-y-2 select-text">
+      <Section title="Overlay">
+        <Row label="Position" hint="Where the overlay appears on screen">
+          <PositionPicker
+            value={overlayPosition}
+            onChange={(pos) => {
+              setOverlayPosition(pos)
+              invoke('set_overlay_position', { position: pos })
+            }}
+          />
+        </Row>
+        <Divider />
+        <Row label="Transparent background" hint="Disable if overlay looks broken on your GPU">
+          <Toggle enabled={overlayTransparent} onChange={(v) => setOverlayTransparent(v)} />
+        </Row>
+      </Section>
 
-        <div className="pb-1">
-          <h1 className="text-lg font-semibold tracking-tight text-white/90">GameWhisper</h1>
-          <p className="text-xs text-white/35 mt-0.5 tracking-wide">Settings</p>
-        </div>
-
-        <Section title="Account">
-          {authLoading ? (
-            <div className="px-4 py-3">
-              <p className="text-sm text-white/30">Loading…</p>
-            </div>
-          ) : user ? (
-            <Row
-              label={user.displayName ?? user.email ?? 'Signed in'}
-              hint={user.displayName ? (user.email ?? '') : ''}
-            >
-              <button
-                onClick={signOut}
-                className="text-xs px-3 py-1.5 rounded-md border border-white/12 bg-white/[0.06] text-white/60 hover:text-white/90 hover:border-white/25 transition-all"
-              >
-                Sign out
-              </button>
-            </Row>
-          ) : (
-            <div className="px-4 py-3 flex flex-col gap-2">
-              <button
-                onClick={signIn}
-                disabled={isSigningIn}
-                className="flex items-center justify-center gap-2.5 w-full py-2 px-4 rounded-lg border border-white/12 bg-white/[0.06] text-sm text-white/80 hover:bg-white/[0.10] hover:border-white/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSigningIn ? (
-                  <span className="text-white/50">Waiting for sign-in…</span>
-                ) : (
-                  <><GoogleIcon />Sign in with Google</>
-                )}
-              </button>
-              {authError && <p className="text-xs text-red-400 text-center">{authError}</p>}
-            </div>
-          )}
-        </Section>
-
-        <Section title="Hotkey">
-          <Row label="Global shortcut" hint="Click then press your desired key combination">
-            <div
-              ref={captureRef}
-              tabIndex={0}
-              onKeyDown={capturingHotkey ? handleHotkeyCapture : undefined}
-              onClick={() => setCapturingHotkey(true)}
-              onBlur={() => setCapturingHotkey(false)}
-              className={`
-                inline-flex items-center px-3 py-1.5 rounded-md border cursor-pointer select-none text-xs font-mono transition-all
-                ${capturingHotkey
-                  ? 'border-blue-500/70 bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/30'
-                  : 'border-white/12 bg-white/[0.06] text-white/80 hover:border-white/25 hover:bg-white/[0.09]'
-                }
-              `}
-            >
-              {capturingHotkey ? 'Press keys…' : hotkey}
-            </div>
-            {hotkeyError && <p className="text-red-400 text-xs mt-1">{hotkeyError}</p>}
-          </Row>
-        </Section>
-
-        <Section title="Overlay">
-          <Row label="Position" hint="Where the overlay appears on screen">
-            <PositionPicker
-              value={overlayPosition}
-              onChange={(pos) => {
-                setOverlayPosition(pos)
-                invoke('set_overlay_position', { position: pos })
-              }}
-            />
-          </Row>
-          <Divider />
-          <Row label="Transparent background" hint="Disable if overlay looks broken on your GPU">
-            <Toggle enabled={overlayTransparent} onChange={(v) => setOverlayTransparent(v)} />
-          </Row>
-        </Section>
-
-        <Section title="Audio">
-          <Row label="Microphone" hint="Input device for voice sessions">
-            <DeviceSelect
-              devices={micDevices}
-              value={micDeviceId}
-              onChange={(id) => setAudioDevices(id, outputDeviceId)}
-            />
-          </Row>
-          <Divider />
-          <Row label="Output" hint="Playback device for agent audio">
-            <DeviceSelect
-              devices={outputDevices}
-              value={outputDeviceId}
-              onChange={(id) => setAudioDevices(micDeviceId, id)}
-            />
-          </Row>
-        </Section>
-
-      </div>
+      <Section title="Audio">
+        <Row label="Microphone" hint="Input device for voice sessions">
+          <DeviceSelect
+            devices={micDevices}
+            value={micDeviceId}
+            onChange={(id) => setAudioDevices(id, outputDeviceId)}
+          />
+        </Row>
+        <Divider />
+        <Row label="Output" hint="Playback device for agent audio">
+          <DeviceSelect
+            devices={outputDevices}
+            value={outputDeviceId}
+            onChange={(id) => setAudioDevices(micDeviceId, id)}
+          />
+        </Row>
+      </Section>
     </div>
   )
 }

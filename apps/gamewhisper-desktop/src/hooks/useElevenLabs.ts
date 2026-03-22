@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
 import { auth } from '../lib/firebase'
+import { useSessionsStore } from '../stores/sessions.store'
 
 export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'searching' | 'error'
 
@@ -66,6 +67,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const searchingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sessionIdRef = useRef<string | null>(null)
   const messagesRef = useRef<Message[]>([])
+  const gameNameRef = useRef<string>('')
 
   const stopAmplitudeMonitor = useCallback(() => {
     if (animFrameRef.current) {
@@ -119,10 +121,16 @@ export function useElevenLabs(): UseElevenLabsReturn {
       searchingTimerRef.current = null
     }
 
-    // Fire-and-forget session/end before closing the conversation
+    // Save to local session history and fire-and-forget session/end
     const sessionId = sessionIdRef.current
     const messages = messagesRef.current
     if (sessionId && messages.length > 0) {
+      useSessionsStore.getState().addSession({
+        id: sessionId,
+        game: gameNameRef.current || null,
+        startedAt: startTimeRef.current,
+        messages: [...messages],
+      })
       const token = await getIdToken()
       if (token) {
         apiPost('/session/end', { sessionId, messages }, token)
@@ -130,6 +138,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
     }
     sessionIdRef.current = null
     messagesRef.current = []
+    gameNameRef.current = ''
 
     if (conversationRef.current) {
       try {
@@ -160,6 +169,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
       const sessionId = crypto.randomUUID()
       sessionIdRef.current = sessionId
       messagesRef.current = []
+      gameNameRef.current = gameName
 
       try {
         // Separate mic stream for amplitude visualization
