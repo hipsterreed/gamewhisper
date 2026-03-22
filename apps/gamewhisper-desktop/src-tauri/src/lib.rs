@@ -185,6 +185,7 @@ fn handle_hotkey(app: &tauri::AppHandle) {
             }
 
             let _ = overlay.show();
+            let _ = overlay.set_focus();
             let payload = game.unwrap_or_else(|| "".to_string());
             let _ = overlay.emit("game-detected", payload);
         }

@@ -5,6 +5,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { useSettingsStore } from '../stores/settings.store'
 import { useAuthStore } from '../stores/auth.store'
 import { useElevenLabs, type SessionStatus } from '../hooks/useElevenLabs'
+import icon from '../assets/gamewhisper_icon_circle.png'
 
 const FALLBACK_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID ?? ''
 
@@ -90,9 +91,10 @@ export function Overlay() {
     >
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 pt-4">
-        <span className="text-white/70 text-sm font-semibold tracking-widest uppercase">
-          GameWhisper
-        </span>
+        <div className="flex items-center gap-2">
+          <img src={icon} alt="GameWhisper" className="w-5 h-5 rounded-md opacity-80" />
+          <span className="text-white/70 text-sm font-semibold tracking-tight">GameWhisper</span>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => invoke('open_settings_window')}

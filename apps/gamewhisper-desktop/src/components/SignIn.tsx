@@ -1,4 +1,5 @@
 import { useAuthStore } from '../stores/auth.store'
+import icon from '../assets/gamewhisper_icon_circle.png'
 
 export function SignIn() {
   const { signIn, isSigningIn, error } = useAuthStore()
@@ -14,7 +15,8 @@ export function SignIn() {
         className="relative shrink-0 h-10"
         style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+          <img src={icon} alt="GameWhisper" className="w-5 h-5 rounded-md opacity-80" />
           <span className="text-sm font-semibold tracking-tight text-white/50">GameWhisper</span>
         </div>
       </div>
