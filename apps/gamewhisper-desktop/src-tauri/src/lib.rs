@@ -146,6 +146,7 @@ pub fn run() {
             update_hotkey,
             set_overlay_position,
             start_oauth_server,
+            open_settings_window,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -244,6 +245,11 @@ fn restart_as_admin(app: &tauri::AppHandle) {
 
 #[cfg(not(windows))]
 fn restart_as_admin(_app: &tauri::AppHandle) {}
+
+#[tauri::command]
+fn open_settings_window(app: tauri::AppHandle) {
+    open_settings(&app);
+}
 
 #[tauri::command]
 fn set_overlay_position(app: tauri::AppHandle, position: String) {

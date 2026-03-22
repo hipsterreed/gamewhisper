@@ -1,7 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
+import { auth } from '../lib/firebase'
 
 export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'searching' | 'error'
+
+interface Message {
+  role: 'user' | 'agent'
+  content: string
+  timestamp: number
+}
 
 interface UseElevenLabsReturn {
   status: SessionStatus
@@ -13,6 +20,31 @@ interface UseElevenLabsReturn {
   sessionTimedOut: boolean
   startSession: (gameName: string, agentId: string, micDeviceId?: string, outputDeviceId?: string) => Promise<void>
   endSession: () => Promise<void>
+}
+
+const API_URL = import.meta.env.VITE_API_URL ?? 'https://api.gamewhisper.io'
+
+async function getIdToken(): Promise<string | null> {
+  try {
+    return (await auth.currentUser?.getIdToken()) ?? null
+  } catch {
+    return null
+  }
+}
+
+async function apiPost(path: string, body: unknown, token: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}${path}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(body),
+    })
+  } catch {
+    // fire-and-forget — don't surface network errors to the user
+  }
 }
 
 export function useElevenLabs(): UseElevenLabsReturn {
@@ -32,6 +64,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startTimeRef = useRef<number>(0)
   const searchingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const sessionIdRef = useRef<string | null>(null)
+  const messagesRef = useRef<Message[]>([])
 
   const stopAmplitudeMonitor = useCallback(() => {
     if (animFrameRef.current) {
@@ -84,6 +118,19 @@ export function useElevenLabs(): UseElevenLabsReturn {
       clearTimeout(searchingTimerRef.current)
       searchingTimerRef.current = null
     }
+
+    // Fire-and-forget session/end before closing the conversation
+    const sessionId = sessionIdRef.current
+    const messages = messagesRef.current
+    if (sessionId && messages.length > 0) {
+      const token = await getIdToken()
+      if (token) {
+        apiPost('/session/end', { sessionId, messages }, token)
+      }
+    }
+    sessionIdRef.current = null
+    messagesRef.current = []
+
     if (conversationRef.current) {
       try {
         await conversationRef.current.endSession()
@@ -110,6 +157,10 @@ export function useElevenLabs(): UseElevenLabsReturn {
       setUserTranscript('')
       setAgentTranscript('')
 
+      const sessionId = crypto.randomUUID()
+      sessionIdRef.current = sessionId
+      messagesRef.current = []
+
       try {
         // Separate mic stream for amplitude visualization
         const audioConstraint = micDeviceId
@@ -126,13 +177,20 @@ export function useElevenLabs(): UseElevenLabsReturn {
         const conversation = await Promise.race([Conversation.startSession({
           agentId,
           connectionType: 'websocket',
-          dynamicVariables: { game_name: gameName || 'Unknown Game', session_id: crypto.randomUUID() },
+          dynamicVariables: { game_name: gameName || 'Unknown Game', session_id: sessionId },
           ...(micDeviceId ? { inputDeviceId: micDeviceId } : {}),
           ...(outputDeviceId ? { outputDeviceId } : {}),
 
           onConnect: () => {
             setStatus('listening')
             startTimeRef.current = Date.now()
+
+            // Fire-and-forget session/start
+            getIdToken().then((token) => {
+              if (token) {
+                apiPost('/session/start', { sessionId, gameName: gameName || 'Unknown Game' }, token)
+              }
+            })
 
             // 60-second session timeout — show message, Overlay handles auto-hide
             timeoutRef.current = setTimeout(() => {
@@ -163,8 +221,10 @@ export function useElevenLabs(): UseElevenLabsReturn {
           onMessage: (message) => {
             if (message.source === 'ai') {
               setAgentTranscript(message.message)
+              messagesRef.current.push({ role: 'agent', content: message.message, timestamp: Date.now() })
             } else if (message.source === 'user') {
               setUserTranscript(message.message)
+              messagesRef.current.push({ role: 'user', content: message.message, timestamp: Date.now() })
               // Start a timer: if agent doesn't speak within 1.5s, assume tool call in flight
               if (searchingTimerRef.current) clearTimeout(searchingTimerRef.current)
               searchingTimerRef.current = setTimeout(() => {
@@ -196,6 +256,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
 
         conversationRef.current = conversation
       } catch (err) {
+        sessionIdRef.current = null
+        messagesRef.current = []
         const msg = err instanceof Error ? err.message : 'Failed to start session'
         const friendly =
           msg.toLowerCase().includes('permission') || msg.toLowerCase().includes('notallowed')

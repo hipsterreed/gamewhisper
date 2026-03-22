@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { listen } from '@tauri-apps/api/event'
 import { getCurrentWindow } from '@tauri-apps/api/window'
+import { invoke } from '@tauri-apps/api/core'
 import { useSettingsStore } from '../stores/settings.store'
+import { useAuthStore } from '../stores/auth.store'
 import { useElevenLabs, type SessionStatus } from '../hooks/useElevenLabs'
 
 const FALLBACK_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID ?? ''
@@ -9,16 +11,28 @@ const FALLBACK_AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID ?? ''
 export function Overlay() {
   const [game, setGame] = useState<string | null>(null)
   const { elevenLabsAgentId, micDeviceId, outputDeviceId, initialized } = useSettingsStore()
+  const { user, isLoading: authLoading } = useAuthStore()
   const el = useElevenLabs()
   const sessionActiveRef = useRef(false)
 
   const agentId = elevenLabsAgentId || FALLBACK_AGENT_ID
+  const isSignedIn = !authLoading && user !== null
+
+  // Keep a ref so the game-detected callback always reads the current auth state
+  // without needing to re-register the listener on every auth change
+  const isSignedInRef = useRef(isSignedIn)
+  isSignedInRef.current = isSignedIn
+
 
   // Start session when overlay becomes visible (game-detected event)
   useEffect(() => {
     const unlisten = listen<string>('game-detected', async (event) => {
       const gameName = event.payload || ''
       setGame(gameName || null)
+      if (!isSignedInRef.current) {
+        invoke('open_settings_window')
+        return
+      }
       if (initialized && agentId) {
         sessionActiveRef.current = true
         await el.startSession(gameName, agentId, micDeviceId || undefined, outputDeviceId || undefined)
@@ -65,7 +79,7 @@ export function Overlay() {
 
   const statusLabel = getStatusLabel(el.status, el.errorMessage, agentId)
 
-  return (
+  const overlayShell = (children: React.ReactNode) => (
     <div
       className="flex flex-col h-full w-full rounded-2xl border border-white/[0.08] select-none overflow-hidden"
       style={{
@@ -81,7 +95,37 @@ export function Overlay() {
         </span>
         <GameBadge game={game} />
       </div>
+      {children}
+    </div>
+  )
 
+  if (!isSignedIn) {
+    return overlayShell(
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 pb-4">
+        <div
+          className="rounded-full flex items-center justify-center"
+          style={{
+            width: 56,
+            height: 56,
+            background: 'radial-gradient(circle at 35% 35%, rgba(99,155,255,0.25), rgba(37,99,235,0.15))',
+            border: '1px solid rgba(99,155,255,0.2)',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" className="opacity-60">
+            <path d="M12 1a3 3 0 0 0-3 3v4H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2h-2V4a3 3 0 0 0-3-3z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="12" cy="15" r="1.5" fill="white" opacity="0.8"/>
+          </svg>
+        </div>
+        <div className="text-center">
+          <p className="text-white/70 text-sm font-medium">Sign in to use GameWhisper</p>
+          <p className="text-white/30 text-xs mt-1">Opening settings…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return overlayShell(
+    <>
       {/* Center: voice orb with progress ring */}
       <div className="flex-1 flex items-center justify-center">
         <VoiceOrb
@@ -108,7 +152,7 @@ export function Overlay() {
           {statusLabel}
         </p>
       </div>
-    </div>
+    </>
   )
 }
 
