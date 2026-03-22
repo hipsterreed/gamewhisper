@@ -92,8 +92,10 @@ export function Dashboard() {
                   onClick={() => selectSession(s.sessionId)}
                   className="relative flex-1 text-left px-3 py-2 min-w-0"
                 >
-                  <p className="text-sm text-white/75 truncate">{s.gameName || 'Unknown Game'}</p>
-                  <p className="text-[11px] text-white/30 mt-0.5">{formatTime(s.startedAt)}</p>
+                  <p className="text-sm text-white/75 truncate">{s.topic || s.gameName || 'Unknown Game'}</p>
+                  <p className="text-[11px] text-white/30 mt-0.5 truncate">
+                    {s.topic ? (s.gameName || 'Unknown Game') + ' · ' : ''}{formatTime(s.startedAt)}
+                  </p>
                 </button>
                 <button
                   onClick={(e) => handleDelete(e, s.sessionId)}

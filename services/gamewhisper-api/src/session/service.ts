@@ -68,6 +68,25 @@ export abstract class SessionService {
     log('info', 'session/deleteSession: deleted', { uid, sessionId })
   }
 
+  /** Fire-and-forget: sets the conversation topic on the session. Never throws. */
+  static async setTopic(sessionId: string, topic: string): Promise<void> {
+    if (!db) return
+
+    try {
+      const uid = await SessionService.lookupUid(sessionId)
+      if (!uid) return
+
+      await db
+        .collection('users')
+        .doc(uid)
+        .collection('sessions')
+        .doc(sessionId)
+        .update({ topic })
+    } catch (err) {
+      log('error', 'session/setTopic failed', { err: String(err), sessionId })
+    }
+  }
+
   /** Fire-and-forget: appends tool call data to the session. Never throws. */
   static async recordToolCall(
     sessionId: string,

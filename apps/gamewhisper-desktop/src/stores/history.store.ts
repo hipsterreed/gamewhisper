@@ -29,6 +29,7 @@ export interface FirestoreSession {
   sessionId: string
   uid: string
   gameName: string | null
+  topic: string | null
   startedAt: number
   endedAt: number | null
   messages: SessionMessage[]

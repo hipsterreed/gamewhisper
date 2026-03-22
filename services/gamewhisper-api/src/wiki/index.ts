@@ -11,10 +11,10 @@ export const wikiRoutes = new Elysia({ prefix: '/wiki' })
   .post(
     '/search',
     async ({ body }) => {
-      const { game, query, sessionId } = body
+      const { game, query, topic, sessionId } = body
       const t0 = Date.now()
 
-      log('info', 'wiki/search', { game, query, sessionId: sessionId ?? null })
+      log('info', 'wiki/search', { game, query, topic: topic ?? null, sessionId: sessionId ?? null })
 
       try {
         const { text, sources } = await WikiService.search(game, query)
@@ -25,6 +25,11 @@ export const wikiRoutes = new Elysia({ prefix: '/wiki' })
           SessionService.recordToolCall(sessionId, query, sources, toolCallDurationMs, false).catch((err) =>
             log('warn', 'wiki/search: recordToolCall failed', { err: String(err), sessionId }),
           )
+          if (topic) {
+            SessionService.setTopic(sessionId, topic).catch((err) =>
+              log('warn', 'wiki/search: setTopic failed', { err: String(err), sessionId }),
+            )
+          }
         }
 
         return { result: text, toolCallDurationMs, preprocessed: false }
