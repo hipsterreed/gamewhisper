@@ -4,6 +4,9 @@
   "windows": ["main", "overlay"],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-hide",
+    "core:window:allow-minimize",
     "store:default",
     "global-shortcut:default",
     "log:default",

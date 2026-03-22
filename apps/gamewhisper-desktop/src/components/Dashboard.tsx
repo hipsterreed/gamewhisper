@@ -46,6 +46,9 @@ export function Dashboard() {
     >
       {/* Title bar */}
       <div data-tauri-drag-region className="relative shrink-0 h-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="text-sm font-semibold tracking-tight text-white/50">GameWhisper</span>
+        </div>
         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-0.5">
           <button
             onClick={() => getCurrentWindow().minimize()}
@@ -56,7 +59,7 @@ export function Dashboard() {
             </svg>
           </button>
           <button
-            onClick={() => getCurrentWindow().close()}
+            onClick={() => getCurrentWindow().hide()}
             className="w-7 h-7 flex items-center justify-center rounded-md text-white/25 hover:text-white hover:bg-red-500/70 transition-all"
           >
             <svg width="9" height="9" viewBox="0 0 9 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -76,9 +79,8 @@ export function Dashboard() {
           style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}
         >
           {/* Sidebar header */}
-          <div className="px-4 pt-4 pb-3 shrink-0">
-            <p className="text-sm font-semibold tracking-tight text-white/85">GameWhisper</p>
-            <p className="text-[10px] font-semibold tracking-widest uppercase text-white/25 mt-3">Sessions</p>
+          <div data-tauri-drag-region className="px-4 pt-4 pb-3 shrink-0">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-white/25">Sessions</p>
           </div>
 
           {/* Session list */}
