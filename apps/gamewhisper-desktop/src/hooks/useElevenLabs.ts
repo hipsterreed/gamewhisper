@@ -210,8 +210,9 @@ export function useElevenLabs(): UseElevenLabsReturn {
 
       try {
         // Separate mic stream for amplitude visualization
+        // Use `ideal` instead of `exact` so we fall back to the default mic if the saved device is unavailable
         const audioConstraint = micDeviceId
-          ? { deviceId: { exact: micDeviceId } }
+          ? { deviceId: { ideal: micDeviceId } }
           : true
         const vizStream = await navigator.mediaDevices.getUserMedia({ audio: audioConstraint, video: false })
         vizStreamRef.current = vizStream
@@ -313,7 +314,9 @@ export function useElevenLabs(): UseElevenLabsReturn {
               ? 'Connection timed out'
               : msg.toLowerCase().includes('network') || msg.toLowerCase().includes('fetch')
                 ? 'Could not connect to ElevenLabs'
-                : msg
+                : msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('notfound') || msg.toLowerCase().includes('requested device')
+                  ? 'Microphone not found — check Settings and make sure your selected mic is connected'
+                  : msg
         setErrorMessage(friendly)
         setStatus('error')
         stopAmplitudeMonitor()
