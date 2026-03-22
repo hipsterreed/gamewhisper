@@ -93,7 +93,19 @@ export function Overlay() {
         <span className="text-white/70 text-sm font-semibold tracking-widest uppercase">
           GameWhisper
         </span>
-        <GameBadge game={game} />
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => invoke('open_settings_window')}
+            title="Session history"
+            className="w-6 h-6 flex items-center justify-center rounded-md text-white/25 hover:text-white/60 hover:bg-white/10 transition-all"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </button>
+          <GameBadge game={game} />
+        </div>
       </div>
       {children}
     </div>

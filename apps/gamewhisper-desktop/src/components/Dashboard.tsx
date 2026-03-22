@@ -1,6 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
-import { useSessionsStore, type Session } from '../stores/sessions.store'
+import { openUrl } from '@tauri-apps/plugin-opener'
+import { useHistory } from '../hooks/useHistory'
+import { type FirestoreSession } from '../stores/history.store'
 import { SettingsContent } from './Settings'
 
 type View = 'session' | 'settings'
@@ -8,16 +10,29 @@ type View = 'session' | 'settings'
 export function Dashboard() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [view, setView] = useState<View>('session')
-  const sessions = useSessionsStore((s) => s.sessions)
+  const { sessions, isLoading, hasMore, fetchMore } = useHistory()
+  const sentinelRef = useRef<HTMLDivElement>(null)
 
-  // Auto-select latest session when sessions list changes
+  // Auto-select latest session when list first loads
   useEffect(() => {
     if (sessions.length > 0 && !selectedId) {
-      setSelectedId(sessions[0].id)
+      setSelectedId(sessions[0].sessionId)
     }
   }, [sessions, selectedId])
 
-  const selected = sessions.find((s) => s.id === selectedId) ?? null
+  // Infinite scroll — trigger fetchMore when sentinel is visible
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0]?.isIntersecting) fetchMore() },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [fetchMore])
+
+  const selected = sessions.find((s) => s.sessionId === selectedId) ?? null
 
   function selectSession(id: string) {
     setSelectedId(id)
@@ -68,25 +83,40 @@ export function Dashboard() {
 
           {/* Session list */}
           <div className="flex-1 overflow-y-auto">
-            {sessions.length === 0 ? (
+            {sessions.length === 0 && !isLoading ? (
               <p className="px-4 py-2 text-xs text-white/20 italic leading-snug">
                 Sessions will appear here after using the overlay
               </p>
             ) : (
               sessions.map((s) => (
                 <button
-                  key={s.id}
-                  onClick={() => selectSession(s.id)}
+                  key={s.sessionId}
+                  onClick={() => selectSession(s.sessionId)}
                   className={`w-full text-left px-4 py-2.5 transition-colors ${
-                    selectedId === s.id && view === 'session'
+                    selectedId === s.sessionId && view === 'session'
                       ? 'bg-white/[0.07]'
                       : 'hover:bg-white/[0.04]'
                   }`}
                 >
-                  <p className="text-sm text-white/75 truncate">{s.game || 'Unknown Game'}</p>
+                  <p className="text-sm text-white/75 truncate">{s.gameName || 'Unknown Game'}</p>
                   <p className="text-[11px] text-white/30 mt-0.5">{formatTime(s.startedAt)}</p>
                 </button>
               ))
+            )}
+
+            {/* Infinite scroll sentinel */}
+            <div ref={sentinelRef} className="h-1" />
+
+            {/* Loading spinner */}
+            {isLoading && (
+              <div className="flex justify-center py-3">
+                <Spinner />
+              </div>
+            )}
+
+            {/* End of list */}
+            {!isLoading && !hasMore && sessions.length > 0 && (
+              <p className="px-4 py-2 text-[10px] text-white/15 text-center">No more sessions</p>
             )}
           </div>
         </div>
@@ -101,7 +131,7 @@ export function Dashboard() {
             <p className="text-sm font-medium text-white/50">
               {view === 'settings'
                 ? 'Settings'
-                : selected?.game ?? (sessions.length === 0 ? 'No sessions yet' : 'Select a session')}
+                : selected?.gameName ?? (sessions.length === 0 ? 'No sessions yet' : 'Select a session')}
             </p>
             <button
               onClick={() => setView(view === 'settings' ? 'session' : 'settings')}
@@ -135,10 +165,14 @@ export function Dashboard() {
   )
 }
 
-function SessionDetail({ session }: { session: Session }) {
+function SessionDetail({ session }: { session: FirestoreSession }) {
+  const sources = session.toolCalls.flatMap((tc) => tc.sources)
+  const uniqueSources = [...new Set(sources)]
+
   return (
     <div className="px-5 py-4 flex flex-col gap-3">
       <p className="text-xs text-white/25">{new Date(session.startedAt).toLocaleString()}</p>
+
       {session.messages.length === 0 ? (
         <p className="text-sm text-white/25 italic">No messages recorded</p>
       ) : (
@@ -156,6 +190,24 @@ function SessionDetail({ session }: { session: Session }) {
           </div>
         ))
       )}
+
+      {uniqueSources.length > 0 && (
+        <div className="mt-1 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <p className="text-[10px] font-semibold tracking-widest uppercase text-white/25 mb-2">Sources</p>
+          <div className="flex flex-col gap-1">
+            {uniqueSources.map((url) => (
+              <button
+                key={url}
+                onClick={() => openUrl(url)}
+                className="text-left text-xs text-blue-400/70 hover:text-blue-400 truncate transition-colors"
+                title={url}
+              >
+                {url}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -166,6 +218,15 @@ function EmptyState() {
       <p className="text-white/20 text-sm">No session selected</p>
       <p className="text-white/12 text-xs">Start the overlay with your hotkey to begin</p>
     </div>
+  )
+}
+
+function Spinner() {
+  return (
+    <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <circle cx="7" cy="7" r="5.5" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
+      <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
   )
 }
 

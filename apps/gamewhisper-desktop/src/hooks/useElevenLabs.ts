@@ -1,7 +1,10 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
+import { setDoc, doc } from 'firebase/firestore'
 import { auth } from '../lib/firebase'
+import { db } from '../lib/firebase'
 import { useSessionsStore } from '../stores/sessions.store'
+import { useHistoryStore } from '../stores/history.store'
 
 export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'searching' | 'error'
 
@@ -131,6 +134,32 @@ export function useElevenLabs(): UseElevenLabsReturn {
         startedAt: startTimeRef.current,
         messages: [...messages],
       })
+      const uid = auth.currentUser?.uid ?? ''
+      const endedAt = Date.now()
+      useHistoryStore.getState().prependSession({
+        sessionId,
+        uid,
+        gameName: gameNameRef.current || null,
+        startedAt: startTimeRef.current,
+        endedAt,
+        messages: [...messages],
+        toolCalls: [],
+      })
+      // Write directly to Firestore so history is available in all windows
+      if (uid) {
+        setDoc(
+          doc(db, 'users', uid, 'sessions', sessionId),
+          {
+            sessionId,
+            uid,
+            gameName: gameNameRef.current || null,
+            startedAt: startTimeRef.current,
+            endedAt,
+            messages: [...messages],
+          },
+          { merge: true },
+        ).catch(() => {})
+      }
       const token = await getIdToken()
       if (token) {
         apiPost('/session/end', { sessionId, messages }, token)
