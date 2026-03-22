@@ -11,13 +11,19 @@ src/
 ├── index.ts              # App bootstrap only — mounts routes, starts server
 ├── lib/
 │   ├── logger.ts         # log() utility — structured JSON output
-│   └── errors.ts         # AppError class
+│   ├── errors.ts         # AppError class
+│   └── firebase.ts       # Firebase Admin SDK init — exports db, auth (null when unconfigured)
 ├── middleware/
-│   └── auth.ts           # authPlugin — named Elysia plugin for API key auth
-└── wiki/                 # Feature module (one folder per domain)
-    ├── index.ts          # Elysia controller — route definitions only
-    ├── service.ts        # WikiService — abstract class, static methods
-    └── model.ts          # WikiModel — t.Object schemas (single source of truth)
+│   ├── auth.ts           # authPlugin — x-api-key for ElevenLabs tool calls
+│   └── firebaseAuth.ts   # firebaseAuthPlugin — Firebase ID token for user-authenticated routes
+├── wiki/                 # Feature module (one folder per domain)
+│   ├── index.ts          # Elysia controller — route definitions only
+│   ├── service.ts        # WikiService — abstract class, static methods
+│   └── model.ts          # WikiModel — t.Object schemas (single source of truth)
+└── session/              # Session persistence
+    ├── index.ts          # POST /session/start, POST /session/end
+    ├── service.ts        # SessionService — createSession, endSession, recordToolCall
+    └── model.ts          # SessionModel — t.Object schemas
 ```
 
 Add new features as new folders under `src/` following the same pattern.
@@ -85,31 +91,71 @@ export const WikiModel = {
 .post('/search', handler, { body: WikiModel.searchBody })
 ```
 
-### Auth is a named Elysia plugin
+### Auth plugins
 
-Auth lives in `src/middleware/auth.ts` as a named plugin (`{ name: 'Auth.Plugin' }`). The `as: 'scoped'` option means the `beforeHandle` hook only applies to routes that `.use(authPlugin)` — the public `/health` route is unaffected.
+Two auth plugins cover different callers:
+
+| Plugin | File | Used by | Header |
+|---|---|---|---|
+| `authPlugin` | `middleware/auth.ts` | ElevenLabs tool calls | `x-api-key: <INTERNAL_API_KEY>` |
+| `firebaseAuthPlugin` | `middleware/firebaseAuth.ts` | Desktop client | `Authorization: Bearer <Firebase ID token>` |
+
+`firebaseAuthPlugin` uses `derive` to verify the token and inject `uid` into the context, then `onBeforeHandle` to reject with 401 if verification failed. Both use `{ as: 'scoped' }` so they only protect routes that explicitly `.use()` them.
 
 ```ts
-export const authPlugin = new Elysia({ name: 'Auth.Plugin' })
-  .onBeforeHandle({ as: 'scoped' }, ({ request, set }) => {
-    if (!INTERNAL_API_KEY || request.headers.get('x-api-key') !== INTERNAL_API_KEY) {
-      set.status = 401
-      return { error: 'Unauthorized' }
-    }
-  })
+// ElevenLabs tool call routes
+export const wikiRoutes = new Elysia({ prefix: '/wiki' })
+  .use(authPlugin)
+
+// User-authenticated routes (desktop client)
+export const sessionRoutes = new Elysia({ prefix: '/session' })
+  .use(firebaseAuthPlugin) // uid available in handler context
+  .post('/start', async ({ uid, body }) => { ... })
 ```
 
-Apply it to any route group that requires authentication:
+## Firestore Data Schema
 
+### Client-readable: `/users/{uid}/sessions/{sessionId}`
 ```ts
-export const wikiRoutes = new Elysia({ prefix: '/wiki' })
-  .use(authPlugin) // all routes below are protected
-  .post('/search', ...)
+{
+  sessionId: string
+  uid: string
+  gameName: string
+  startedAt: number      // epoch ms
+  endedAt: number | null // epoch ms
+  messages: [{ role: 'user'|'agent', content: string, timestamp: number }]
+  toolCalls: [{ query: string, sources: string[], durationMs: number, preprocessed: boolean, recordedAt: number }]
+}
+```
+
+### Server-only collections (Admin SDK only, clients blocked by security rules)
+- `/_sessionIndex/{sessionId}` — `{ uid, gameName, createdAt }` — used by wiki search to map sessionId → uid
+- `/_analytics/{sessionId}` — reserved for Stage 6 operational metrics
+
+### Firestore security rules (deploy in Firebase Console)
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+    match /_sessionIndex/{document=**} {
+      allow read, write: if false;
+    }
+    match /_analytics/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
 ```
 
 ## Security
 
-- All non-health routes require `x-api-key` header validated against `INTERNAL_API_KEY`
+- `/wiki/search` and machine-to-machine routes require `x-api-key` header (`INTERNAL_API_KEY`)
+- `/session/*` routes require Firebase ID token — uid is verified server-side, never trusted from client
+- `POST /session/end` verifies session ownership via `_sessionIndex` before writing
+- `_sessionIndex` and `_analytics` are admin-SDK-only; Firestore rules block all client access
 - Secrets via environment variables only — never hardcode keys
 - Validate all input with `t.Object` schemas on every route body, query, and param
 - Return generic error messages to callers; log the real error server-side
@@ -160,8 +206,11 @@ Output format: `{ level, ts, msg, ...data }` — JSON lines to stdout.
 
 | Variable | Required | Description |
 |---|---|---|
-| `INTERNAL_API_KEY` | Yes | Shared secret for client → API auth |
+| `INTERNAL_API_KEY` | Yes | Shared secret for ElevenLabs tool call auth |
 | `FIRECRAWL_API_KEY` | Yes | Firecrawl API key |
+| `FIREBASE_PROJECT_ID` | Yes (Stage 5+) | Firebase project ID |
+| `FIREBASE_CLIENT_EMAIL` | Yes (Stage 5+) | Firebase service account email |
+| `FIREBASE_PRIVATE_KEY` | Yes (Stage 5+) | Firebase service account private key (Railway auto-escapes newlines) |
 | `PORT` | No | HTTP port (default: 3000) |
 
 ## Commands

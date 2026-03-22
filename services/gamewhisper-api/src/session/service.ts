@@ -1,0 +1,87 @@
+import { FieldValue } from 'firebase-admin/firestore'
+import { db } from '../lib/firebase'
+import { log } from '../lib/logger'
+import { AppError } from '../lib/errors'
+
+interface Message {
+  role: 'user' | 'agent'
+  content: string
+  timestamp: number
+}
+
+export abstract class SessionService {
+  private static async lookupUid(sessionId: string): Promise<string | null> {
+    if (!db) return null
+    const snap = await db.collection('_sessionIndex').doc(sessionId).get()
+    if (!snap.exists) return null
+    return (snap.data() as { uid: string }).uid
+  }
+
+  static async createSession(uid: string, sessionId: string, gameName: string): Promise<void> {
+    if (!db) throw new AppError('Firebase not configured', 503, 'FIREBASE_UNAVAILABLE')
+
+    const batch = db.batch()
+
+    const sessionRef = db.collection('users').doc(uid).collection('sessions').doc(sessionId)
+    batch.set(sessionRef, {
+      sessionId,
+      uid,
+      gameName,
+      startedAt: Date.now(),
+      endedAt: null,
+      messages: [],
+      toolCalls: [],
+    })
+
+    const indexRef = db.collection('_sessionIndex').doc(sessionId)
+    batch.set(indexRef, { uid, gameName, createdAt: Date.now() })
+
+    await batch.commit()
+    log('info', 'session/createSession: written', { uid, sessionId })
+  }
+
+  static async endSession(uid: string, sessionId: string, messages: Message[]): Promise<void> {
+    if (!db) throw new AppError('Firebase not configured', 503, 'FIREBASE_UNAVAILABLE')
+
+    const ownerUid = await SessionService.lookupUid(sessionId)
+    if (!ownerUid) throw new AppError('Session not found', 404, 'SESSION_NOT_FOUND')
+    if (ownerUid !== uid) throw new AppError('Forbidden', 403, 'FORBIDDEN')
+
+    await db.collection('users').doc(uid).collection('sessions').doc(sessionId).update({
+      messages,
+      endedAt: Date.now(),
+    })
+    log('info', 'session/endSession: written', { uid, sessionId, messageCount: messages.length })
+  }
+
+  /** Fire-and-forget: appends tool call data to the session. Never throws. */
+  static async recordToolCall(
+    sessionId: string,
+    query: string,
+    sources: string[],
+    durationMs: number,
+    preprocessed: boolean,
+  ): Promise<void> {
+    if (!db) return
+
+    try {
+      const uid = await SessionService.lookupUid(sessionId)
+      if (!uid) {
+        log('warn', 'session/recordToolCall: sessionId not in index — session/start may not have been called', {
+          sessionId,
+        })
+        return
+      }
+
+      const toolCall = { query, sources, durationMs, preprocessed, recordedAt: Date.now() }
+      await db
+        .collection('users')
+        .doc(uid)
+        .collection('sessions')
+        .doc(sessionId)
+        .update({ toolCalls: FieldValue.arrayUnion(toolCall) })
+    } catch (err) {
+      log('error', 'session/recordToolCall failed', { err: String(err), sessionId })
+    }
+  }
+}

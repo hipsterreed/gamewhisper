@@ -22,7 +22,7 @@ type WebResult = SearchResultWeb & Document
 export abstract class WikiService {
   private static fc = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY! })
 
-  static async search(game: string, query: string): Promise<string> {
+  static async search(game: string, query: string): Promise<{ text: string; sources: string[] }> {
     const domains = GAME_DOMAINS[game] ?? []
 
     const req: Record<string, unknown> = {
@@ -41,14 +41,17 @@ export abstract class WikiService {
     const items = (result.web as WebResult[] | undefined) ?? []
 
     if (!items.length) {
-      return 'No wiki data found for that query. Please answer based on your training data.'
+      return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
     }
 
-    return items
+    const sources = items.map((doc) => doc.url ?? '').filter(Boolean)
+    const text = items
       .map((doc) => {
         const content = (doc.markdown ?? doc.description ?? '').slice(0, MAX_CHARS_PER_SOURCE)
         return `Source: ${doc.url}\n${content}`
       })
       .join('\n\n---\n\n')
+
+    return { text, sources }
   }
 }

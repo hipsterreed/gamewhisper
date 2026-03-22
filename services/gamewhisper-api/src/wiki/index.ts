@@ -4,6 +4,7 @@ import { log } from '../lib/logger'
 import { AppError } from '../lib/errors'
 import { WikiService } from './service'
 import { WikiModel } from './model'
+import { SessionService } from '../session/service'
 
 export const wikiRoutes = new Elysia({ prefix: '/wiki' })
   .use(authPlugin)
@@ -16,10 +17,17 @@ export const wikiRoutes = new Elysia({ prefix: '/wiki' })
       log('info', 'wiki/search', { game, query, sessionId: sessionId ?? null })
 
       try {
-        const result = await WikiService.search(game, query)
+        const { text, sources } = await WikiService.search(game, query)
         const toolCallDurationMs = Date.now() - t0
-        log('info', 'wiki/search complete', { game, toolCallDurationMs })
-        return { result, toolCallDurationMs, preprocessed: false }
+        log('info', 'wiki/search complete', { game, toolCallDurationMs, sourceCount: sources.length })
+
+        if (sessionId) {
+          SessionService.recordToolCall(sessionId, query, sources, toolCallDurationMs, false).catch((err) =>
+            log('warn', 'wiki/search: recordToolCall failed', { err: String(err), sessionId }),
+          )
+        }
+
+        return { result: text, toolCallDurationMs, preprocessed: false }
       } catch (err) {
         const toolCallDurationMs = Date.now() - t0
         log('error', 'wiki/search failed', { err: String(err), toolCallDurationMs })

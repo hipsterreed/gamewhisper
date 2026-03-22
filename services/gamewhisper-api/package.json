@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "@mendable/firecrawl-js": "^4.16.0",
-    "elysia": "latest"
+    "elysia": "latest",
+    "firebase-admin": "^13.7.0"
   },
   "devDependencies": {
     "bun-types": "latest"
