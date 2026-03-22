@@ -85,9 +85,9 @@ export function Dashboard() {
       {/* Body */}
       <div className="flex flex-1 overflow-hidden">
 
-        {/* Left sidebar */}
+        {/* Left sidebar — hidden when settings is open */}
         <div
-          className="w-48 shrink-0 flex flex-col overflow-hidden"
+          className={`w-48 shrink-0 flex flex-col overflow-hidden transition-all ${view === 'settings' ? 'hidden' : ''}`}
           style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}
         >
           {/* Sidebar header */}
@@ -153,22 +153,28 @@ export function Dashboard() {
             className="flex items-center justify-between px-5 shrink-0"
             style={{ height: 44, borderBottom: '1px solid rgba(255,255,255,0.05)' }}
           >
-            <p className="text-sm font-medium text-white/50">
-              {view === 'settings'
-                ? 'Settings'
-                : selected?.gameName ?? (sessions.length === 0 ? 'No sessions yet' : 'Select a session')}
-            </p>
-            <button
-              onClick={() => setView(view === 'settings' ? 'session' : 'settings')}
-              title="Settings"
-              className={`w-7 h-7 flex items-center justify-center rounded-md transition-all ${
-                view === 'settings'
-                  ? 'text-blue-400 bg-blue-500/15'
-                  : 'text-white/30 hover:text-white/70 hover:bg-white/10'
-              }`}
-            >
-              <GearIcon />
-            </button>
+            {view === 'settings' ? (
+              <button
+                onClick={() => setView('session')}
+                className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors"
+              >
+                <ChevronLeftIcon />
+                <span className="text-sm font-medium">Settings</span>
+              </button>
+            ) : (
+              <>
+                <p className="text-sm font-medium text-white/50">
+                  {selected?.gameName ?? (sessions.length === 0 ? 'No sessions yet' : 'Select a session')}
+                </p>
+                <button
+                  onClick={() => setView('settings')}
+                  title="Settings"
+                  className="w-7 h-7 flex items-center justify-center rounded-md transition-all text-white/30 hover:text-white/70 hover:bg-white/10"
+                >
+                  <GearIcon />
+                </button>
+              </>
+            )}
           </div>
 
           {/* Content body */}
@@ -251,6 +257,14 @@ function Spinner() {
     <svg className="animate-spin" width="14" height="14" viewBox="0 0 14 14" fill="none">
       <circle cx="7" cy="7" r="5.5" stroke="rgba(255,255,255,0.15)" strokeWidth="1.5" />
       <path d="M7 1.5A5.5 5.5 0 0 1 12.5 7" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function ChevronLeftIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="15 18 9 12 15 6" />
     </svg>
   )
 }
