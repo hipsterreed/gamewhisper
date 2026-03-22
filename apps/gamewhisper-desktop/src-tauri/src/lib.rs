@@ -126,6 +126,11 @@ pub fn run() {
                     "quit" => app.exit(0),
                     _ => {}
                 })
+                .on_tray_icon_event(|tray, event| {
+                    if let tauri::tray::TrayIconEvent::DoubleClick { .. } = event {
+                        open_settings(tray.app_handle());
+                    }
+                })
                 .build(app)?;
 
             // Remove DWM border on the settings window
