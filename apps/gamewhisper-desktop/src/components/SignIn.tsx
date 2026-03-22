@@ -14,7 +14,7 @@ export function SignIn() {
       <div
         data-tauri-drag-region
         className="relative shrink-0 h-10"
-        style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+        style={{ background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
       >
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
           <img src={icon} alt="GameWhisper" className="w-5 h-5 rounded-md opacity-80" />
