@@ -1,8 +1,8 @@
 import FirecrawlApp, { type SearchResultWeb, type Document } from '@mendable/firecrawl-js'
 import { AppError } from '../lib/errors'
 
-const SEARCH_TIMEOUT_MS = 12_000
-const MAX_CHARS_PER_SOURCE = 3_000
+const SEARCH_TIMEOUT_MS = 25_000
+const MAX_CHARS_PER_SOURCE = 2_000
 
 const GAME_DOMAINS: Record<string, string[]> = {
   'Elden Ring': ['wiki.fextralife.com'],
@@ -26,7 +26,7 @@ export abstract class WikiService {
     const domains = GAME_DOMAINS[game] ?? []
 
     const req: Record<string, unknown> = {
-      limit: 3,
+      limit: 2,
       scrapeOptions: { formats: ['markdown'], onlyMainContent: true },
     }
     if (domains.length > 0) {
