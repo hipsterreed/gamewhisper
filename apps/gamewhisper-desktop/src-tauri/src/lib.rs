@@ -254,7 +254,16 @@ fn open_settings_window(app: tauri::AppHandle) {
 #[tauri::command]
 fn set_overlay_position(app: tauri::AppHandle, position: String) {
     let state = app.state::<AppState>();
-    *state.overlay_position.lock().unwrap() = position;
+    *state.overlay_position.lock().unwrap() = position.clone();
+
+    // Move the overlay immediately if it's currently visible
+    if let Some(overlay) = app.get_webview_window("overlay") {
+        if let Ok(Some(monitor)) = overlay.primary_monitor() {
+            let win_size = overlay.outer_size().unwrap_or(tauri::PhysicalSize { width: 480, height: 320 });
+            let pos = compute_overlay_position(&monitor, win_size, &position);
+            let _ = overlay.set_position(pos);
+        }
+    }
 }
 
 /// Binds a one-shot HTTP server on a random loopback port, waits for the OAuth
