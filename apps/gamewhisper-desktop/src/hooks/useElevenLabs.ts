@@ -52,6 +52,34 @@ async function apiPost(path: string, body: unknown, token: string): Promise<void
   }
 }
 
+const NEW_USER_GREETINGS = [
+  'Ah, {game_name}, need help?',
+  'Need help in {game_name}?',
+  'Playing {game_name}? What do you need?',
+  'What can I help you with in {game_name}?',
+]
+
+const RETURNING_USER_GREETINGS = [
+  "What's up?",
+  'How can I help?',
+  'What do you need?',
+  'Go ahead.',
+]
+
+function pickGreeting(gameName: string): string {
+  const oneHourAgo = Date.now() - 60 * 60 * 1000
+  const recentSession = useHistoryStore
+    .getState()
+    .sessions.some((s) => s.startedAt >= oneHourAgo)
+
+  if (recentSession) {
+    return RETURNING_USER_GREETINGS[Math.floor(Math.random() * RETURNING_USER_GREETINGS.length)]
+  }
+
+  const template = NEW_USER_GREETINGS[Math.floor(Math.random() * NEW_USER_GREETINGS.length)]
+  return template.replace('{game_name}', gameName || 'that game')
+}
+
 export function useElevenLabs(): UseElevenLabsReturn {
   const [status, setStatus] = useState<SessionStatus>('idle')
   const [userTranscript, setUserTranscript] = useState('')
@@ -166,7 +194,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             const fresh = { toolCalls: [], ...snap.data() } as unknown as import('../stores/history.store').FirestoreSession
             useHistoryStore.getState().prependSession(fresh)
           }
-        }).catch(() => {})
+        }).catch(() => { })
       }
       const token = await getIdToken()
       if (token) {
@@ -225,7 +253,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
         const conversation = await Promise.race([Conversation.startSession({
           agentId,
           connectionType: 'websocket',
-          dynamicVariables: { game_name: gameName || 'Unknown Game', session_id: sessionId },
+          dynamicVariables: { game_name: gameName || 'Unknown Game', session_id: sessionId, first_message: pickGreeting(gameName) },
           ...(micDeviceId ? { inputDeviceId: micDeviceId } : {}),
           ...(outputDeviceId ? { outputDeviceId } : {}),
 
@@ -248,7 +276,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
               stopAmplitudeMonitor()
               stopTimers()
               if (conversationRef.current) {
-                conversationRef.current.endSession().catch(() => {})
+                conversationRef.current.endSession().catch(() => { })
                 conversationRef.current = null
               }
             }, 60_000)

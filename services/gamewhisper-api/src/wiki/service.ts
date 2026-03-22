@@ -2,7 +2,7 @@ import FirecrawlApp, { type SearchResultWeb, type Document } from '@mendable/fir
 import { AppError } from '../lib/errors'
 
 const SEARCH_TIMEOUT_MS = 25_000
-const MAX_CHARS_PER_SOURCE = 2_000
+const MAX_CHARS_PER_SOURCE = 8_000
 
 const GAME_DOMAINS: Record<string, string[]> = {
   'Elden Ring': ['wiki.fextralife.com'],
@@ -25,10 +25,7 @@ export abstract class WikiService {
   static async search(game: string, query: string): Promise<{ text: string; sources: string[] }> {
     const domains = GAME_DOMAINS[game] ?? []
 
-    const req: Record<string, unknown> = {
-      limit: 2,
-      scrapeOptions: { formats: ['markdown'], onlyMainContent: true },
-    }
+    const req: Record<string, unknown> = { limit: 2 }
     if (domains.length > 0) {
       req.includeDomains = domains
     }
@@ -44,14 +41,33 @@ export abstract class WikiService {
       return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
     }
 
-    const sources = items.map((doc) => doc.url ?? '').filter(Boolean)
-    const text = items
-      .map((doc) => {
-        const content = (doc.markdown ?? doc.description ?? '').slice(0, MAX_CHARS_PER_SOURCE)
-        return `Source: ${doc.url}\n${content}`
-      })
-      .join('\n\n---\n\n')
+    const urls = items.map((doc) => doc.url ?? '').filter(Boolean)
 
-    return { text, sources }
+    const scrapeResults = await Promise.all(
+      urls.map((url) =>
+        WikiService.fc.scrapeUrl(url, { formats: ['markdown'], onlyMainContent: true }).catch(() => null),
+      ),
+    )
+
+    const sources: string[] = []
+    const parts: string[] = []
+
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i]
+      const scraped = scrapeResults[i]
+      const markdown =
+        scraped && 'markdown' in scraped ? (scraped.markdown ?? '') : (items[i].markdown ?? items[i].description ?? '')
+      const content = markdown.slice(0, MAX_CHARS_PER_SOURCE)
+      if (content) {
+        sources.push(url)
+        parts.push(`Source: ${url}\n${content}`)
+      }
+    }
+
+    if (!parts.length) {
+      return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
+    }
+
+    return { text: parts.join('\n\n---\n\n'), sources }
   }
 }
