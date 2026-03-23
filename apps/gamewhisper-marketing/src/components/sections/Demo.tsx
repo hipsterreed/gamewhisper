@@ -35,23 +35,20 @@ export default function Demo() {
           transition={{ duration: 0.6, delay: 0.15 }}
           style={{ position: 'relative' }}
         >
-          <div
-            className="media-placeholder"
+          <video
+            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_demo_2.mp4?alt=media&token=13fd892d-fd31-45bd-8ee7-ff44732d8803"
+            controls
+            playsInline
             style={{
-              aspectRatio: '16/9',
+              width: '100%',
               maxWidth: 900,
+              display: 'block',
               margin: '0 auto',
-              borderColor: 'rgba(79,163,255,0.2)',
+              borderRadius: 16,
+              border: '1px solid rgba(79,163,255,0.2)',
               boxShadow: '0 0 80px rgba(79,163,255,0.06), 0 40px 80px rgba(0,0,0,0.5)',
             }}
-          >
-            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" opacity={0.25}>
-              <circle cx="28" cy="28" r="26" stroke="currentColor" strokeWidth="2" />
-              <path d="M22 18l20 10-20 10V18z" fill="currentColor" />
-            </svg>
-            <span style={{ fontSize: 15 }}>Demo Video Placeholder</span>
-            <span style={{ fontSize: 12, opacity: 0.5 }}>Replace with embedded demo or video loop</span>
-          </div>
+          />
           {/* Glow beneath */}
           <div style={{
             position: 'absolute', bottom: -40, left: '15%', right: '15%', height: 80,

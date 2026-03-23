@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 import WispOrb, { STATE_COLORS } from '../ui/WispOrb'
 import type { WispState } from '../ui/WispOrb'
+import logoVideo from '../../assets/gamewhisper_icon_animation.mp4'
 
 const states: WispState[] = ['listening', 'searching', 'speaking', 'error']
 
@@ -52,7 +53,25 @@ export default function WispSection() {
             animate={inView ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <WispOrb state={activeState} size={120} />
+            {activeState === 'listening' ? (
+              <video
+                src={logoVideo}
+                autoPlay
+                loop
+                muted
+                playsInline
+                style={{
+                  width: 200,
+                  height: 200,
+                  objectFit: 'cover',
+                  maskImage: 'radial-gradient(circle, black 10%, transparent 45%)',
+                  WebkitMaskImage: 'radial-gradient(circle, black 10%, transparent 45%)',
+                  display: 'block',
+                }}
+              />
+            ) : (
+              <WispOrb state={activeState} size={120} />
+            )}
           </motion.div>
 
           {/* State selector */}

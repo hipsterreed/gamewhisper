@@ -61,8 +61,7 @@ export abstract class WikiService {
 
     const scrapeResults = await Promise.all(
       urls.map((url) =>
-        // @ts-ignore — scrapeUrl exists at runtime; TS types use 'scrape' but behaviour is identical
-        WikiService.fc.scrapeUrl(url, { formats: ['markdown'], onlyMainContent: true }).catch((e: unknown) => {
+        WikiService.fc.scrape(url, { formats: ['markdown'], onlyMainContent: true }).catch((e: unknown) => {
           log('warn', 'firecrawl/scrape: page failed', { url, err: String(e) })
           return null
         }),

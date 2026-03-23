@@ -144,22 +144,20 @@ export default function Hero() {
             </span>
           ))}
         </div>
-        <div
-          className="media-placeholder"
+        <video
+          src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_demo_2.mp4?alt=media&token=13fd892d-fd31-45bd-8ee7-ff44732d8803"
+          autoPlay
+          loop
+          muted
+          playsInline
           style={{
-            aspectRatio: '16/9',
-            borderColor: 'rgba(79,163,255,0.2)',
+            width: '100%',
+            display: 'block',
+            borderRadius: 16,
+            border: '1px solid rgba(79,163,255,0.2)',
             boxShadow: '0 0 60px rgba(79,163,255,0.08), 0 40px 80px rgba(0,0,0,0.5)',
           }}
-        >
-          <svg width="48" height="48" viewBox="0 0 48 48" fill="none" opacity={0.3}>
-            <rect x="4" y="4" width="40" height="40" rx="8" stroke="currentColor" strokeWidth="2" />
-            <circle cx="24" cy="24" r="10" stroke="currentColor" strokeWidth="2" />
-            <path d="M20 19l10 5-10 5V19z" fill="currentColor" />
-          </svg>
-          <span>Hero Product Demo Placeholder</span>
-          <span style={{ fontSize: 11, opacity: 0.5 }}>Replace with gameplay footage or product loop</span>
-        </div>
+        />
         <div style={{
           position: 'absolute', bottom: -40, left: '10%', right: '10%', height: 80,
           background: 'rgba(79,163,255,0.06)',
