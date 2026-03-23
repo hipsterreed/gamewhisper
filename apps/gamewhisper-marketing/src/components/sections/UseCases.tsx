@@ -2,10 +2,10 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 
 const cases = [
-  { emoji: '⚔️', title: 'Stuck on a boss?', desc: 'Ask for strategy without opening a guide.' },
-  { emoji: '🗺️', title: 'Lost in a questline?', desc: 'Find the next step without leaving the game.' },
-  { emoji: '🛡️', title: 'Need a build recommendation?', desc: 'Get a quick answer while staying focused.' },
-  { emoji: '📍', title: 'Looking for an item or location?', desc: 'Let Game Whisper search the wiki for you.' },
+  { emoji: '⚔️', title: 'Stuck on a boss?', desc: 'Get a strategy tip without opening a guide.' },
+  { emoji: '⛏️', title: 'Forgot a recipe or crafting step?', desc: 'Ask out loud and keep moving.' },
+  { emoji: '📍', title: 'Need an item location fast?', desc: 'Skip the wiki tabs and get the answer in-game.' },
+  { emoji: '🗺️', title: 'Trying to remember a quest step?', desc: 'Get unstuck without breaking immersion.' },
 ]
 
 export default function UseCases() {

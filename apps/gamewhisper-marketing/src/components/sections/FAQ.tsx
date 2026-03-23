@@ -3,15 +3,15 @@ import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { useRef } from 'react'
 
 const faqs = [
-  { q: 'What games does Game Whisper support?', a: 'Game Whisper supports selected PC games and is expanding over time. The list includes popular titles like Minecraft, Stardew Valley, Elden Ring, and more.' },
-  { q: 'Does it work in fullscreen?', a: 'Game Whisper is designed to work as an overlay while you play supported games, including fullscreen mode.' },
-  { q: 'Do I need to alt-tab or click anything?', a: 'No. You can summon it with a hotkey and speak naturally. No alt-tab, no mouse clicks required.' },
-  { q: 'How does it know what game I\'m playing?', a: 'Game Whisper detects the active game automatically and uses that context when searching for answers.' },
-  { q: 'Where do the answers come from?', a: 'Game Whisper uses game-specific wiki sources and shows source links when relevant so you can verify the answer.' },
-  { q: 'Can I view past sessions?', a: 'Yes. Session history includes transcripts, timestamps, and sources for everything Game Whisper found.' },
-  { q: 'Can I change the hotkey?', a: 'Yes. The hotkey is fully configurable in the settings.' },
-  { q: 'Is it Windows only?', a: 'Yes, currently Game Whisper is a Windows desktop app.' },
-  { q: 'Can I choose my microphone and speakers?', a: 'Yes. Input and output devices are configurable in settings.' },
+  { q: 'What games does Game Whisper support?', a: 'Game Whisper supports selected PC games today and is expanding over time. It works best in games where players frequently look up quests, crafting, item locations, builds, and progression help.' },
+  { q: 'Does it work in fullscreen?', a: 'Game Whisper is designed to work as an overlay while you play supported games.' },
+  { q: 'Do I need to alt-tab or click anything?', a: 'No. Press your hotkey, ask naturally, and stay in the game.' },
+  { q: 'How does it know what game I\'m playing?', a: 'Game Whisper detects the active game and uses that context automatically.' },
+  { q: 'Where do the answers come from?', a: 'Game Whisper pulls from game-specific wiki sources and includes source-backed results, so answers are grounded instead of guessed.' },
+  { q: 'Can I view past sessions?', a: 'Yes. Session history includes transcripts, timestamps, and sources.' },
+  { q: 'Can I change the hotkey?', a: 'Yes. The hotkey is configurable.' },
+  { q: 'Is it Windows only?', a: 'Yes. Game Whisper is currently a Windows desktop app.' },
+  { q: 'Can I choose my microphone and speakers?', a: 'Yes. Input and output devices are configurable.' },
   { q: 'Is it free?', a: 'Game Whisper is currently available for free during early access.' },
 ]
 

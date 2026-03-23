@@ -1,14 +1,14 @@
 import Nav from './components/sections/Nav'
 import Hero from './components/sections/Hero'
+import PoweredBy from './components/sections/PoweredBy'
 import BenefitStrip from './components/sections/BenefitStrip'
-import EmotionalFraming from './components/sections/EmotionalFraming'
 import Problem from './components/sections/Problem'
 import HowItWorks from './components/sections/HowItWorks'
 import UseCases from './components/sections/UseCases'
-import Features from './components/sections/Features'
-import WispSection from './components/sections/WispSection'
 import SupportedGames from './components/sections/SupportedGames'
 import Demo from './components/sections/Demo'
+import Features from './components/sections/Features'
+import WispSection from './components/sections/WispSection'
 import Comparison from './components/sections/Comparison'
 import Credibility from './components/sections/Credibility'
 import FAQ from './components/sections/FAQ'
@@ -20,15 +20,15 @@ export default function App() {
       <Nav />
       <main>
         <Hero />
+        <PoweredBy />
         <BenefitStrip />
-        <EmotionalFraming />
         <Problem />
         <HowItWorks />
         <UseCases />
-        <Features />
-        <WispSection />
         <SupportedGames />
         <Demo />
+        <Features />
+        <WispSection />
         <Comparison />
         <Credibility />
         <FAQ />

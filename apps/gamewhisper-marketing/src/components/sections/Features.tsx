@@ -2,15 +2,15 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 
 const features = [
-  { icon: '🎮', title: 'Automatic Game Detection', desc: 'Game Whisper knows what you\'re playing and uses that context automatically.' },
-  { icon: '🎙️', title: 'Voice AI Responses', desc: 'Ask naturally and hear a spoken answer back in real time.' },
-  { icon: '🔍', title: 'Real-Time Wiki Search', desc: 'Pulls from game-specific wiki sources when the answer needs proof.' },
-  { icon: '🪟', title: 'Transparent In-Game Overlay', desc: 'A sleek overlay sits on top of your game without getting in the way.' },
-  { icon: '📝', title: 'Live Transcripts', desc: 'See what you said and what Game Whisper heard.' },
-  { icon: '🕐', title: 'Session History', desc: 'Revisit past answers with transcripts, sources, and timestamps.' },
-  { icon: '🔗', title: 'Source Links', desc: 'Open the wiki pages behind the answer anytime.' },
-  { icon: '🎧', title: 'Audio Device Selection', desc: 'Choose your preferred mic and output setup.' },
-  { icon: '⚙️', title: 'Fully Configurable', desc: 'Hotkey, corner placement, transparency, audio devices, and more.' },
+  { icon: '🕐', title: 'Session History', desc: 'Revisit past answers with full transcripts, sources, and timestamps.' },
+  { icon: '📝', title: 'Live Transcripts', desc: 'See exactly what you said and what Game Whisper heard in real time.' },
+  { icon: '🔗', title: 'Source Links', desc: 'Open the wiki page behind any answer directly from the overlay.' },
+  { icon: '🎧', title: 'Audio Device Selection', desc: 'Choose your preferred microphone and speaker output independently.' },
+  { icon: '⌨️', title: 'Hotkey Customization', desc: 'Set any key combination to summon Game Whisper from any game.' },
+  { icon: '🪟', title: 'Overlay Placement', desc: 'Pin the overlay to any corner of your screen so it never blocks gameplay.' },
+  { icon: '🔆', title: 'Transparency Control', desc: 'Adjust overlay opacity so it fits your setup.' },
+  { icon: '💾', title: 'Settings Persistence', desc: 'Your preferences are saved and restored across every session.' },
+  { icon: '🖥️', title: 'System Tray', desc: 'Game Whisper lives quietly in the tray until you need it.' },
 ]
 
 export default function Features() {
@@ -37,7 +37,7 @@ export default function Features() {
             Everything you need to stay immersed.
           </h2>
           <p style={{ fontSize: 16, color: 'var(--color-muted)', margin: 0 }}>
-            Built to live inside your game session without breaking it.
+            The details that make it feel at home in your setup.
           </p>
         </motion.div>
 

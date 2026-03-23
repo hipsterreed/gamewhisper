@@ -2,12 +2,12 @@ import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
 
 const rows = [
-  { old: 'Leaves your game', new: 'Stays in-game' },
-  { old: 'Breaks immersion', new: 'Voice-first' },
-  { old: 'Slower to use', new: 'One hotkey' },
-  { old: 'Requires typing and searching', new: 'Spoken answers' },
-  { old: 'Too many tabs', new: 'Game-aware context' },
-  { old: 'Easy to lose focus', new: 'Fast source-backed help' },
+  { old: 'Pulls you out of the game', new: 'Stays inside the session' },
+  { old: 'Breaks immersion', new: 'Keeps you in the moment' },
+  { old: 'Requires typing and searching', new: 'Ask naturally out loud' },
+  { old: 'Slows down gameplay', new: 'Answers in seconds' },
+  { old: 'Too many tabs and windows', new: 'One hotkey, one overlay' },
+  { old: 'Generic search results', new: 'Game-aware, source-backed answers' },
 ]
 
 export default function Comparison() {

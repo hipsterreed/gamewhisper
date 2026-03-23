@@ -61,7 +61,7 @@ export default function Hero() {
             marginRight: 'auto',
           }}
         >
-          Game Whisper is the voice-powered gaming assistant that listens, finds the answer, and speaks it back while you keep playing.
+          Press a hotkey, ask out loud, and get a spoken answer without alt-tabbing to a wiki.
         </motion.p>
 
         {/* CTAs */}
@@ -69,7 +69,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 32 }}
+          style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 28 }}
         >
           <a href="#download" className="btn-primary" style={{ fontSize: 16, padding: '14px 32px' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
@@ -81,24 +81,26 @@ export default function Hero() {
           </a>
         </motion.div>
 
-        {/* Trust pills */}
+        {/* Example prompts */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.45 }}
-          style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}
         >
-          {['Windows Desktop', 'Powered by ElevenLabs', 'Real-Time Wiki Search', 'No Alt-Tab Required'].map(item => (
+          <span style={{ fontSize: 13, color: 'var(--color-muted)', fontWeight: 500 }}>Ask things like:</span>
+          {['"How do I make a lead?"', '"What gifts does Abigail love?"', '"Where do I go after Margit?"'].map(prompt => (
             <span
-              key={item}
+              key={prompt}
               style={{
-                fontSize: 12, color: 'var(--color-muted)', fontWeight: 500,
+                fontSize: 13, color: 'var(--color-muted-bright)', fontWeight: 400,
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.07)',
-                borderRadius: 100, padding: '5px 12px',
+                borderRadius: 6, padding: '4px 10px',
+                fontStyle: 'italic',
               }}
             >
-              {item}
+              {prompt}
             </span>
           ))}
         </motion.div>
