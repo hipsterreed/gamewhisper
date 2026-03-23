@@ -31,9 +31,6 @@ export default function PoweredBy() {
             <img src={firecrawlLogo} alt="Firecrawl" style={{ height: 36, opacity: 0.8 }} />
           </div>
 
-          <p style={{ fontSize: 13, color: 'var(--color-muted)', margin: 0, textAlign: 'center' }}>
-            Natural voice interaction + live game wiki retrieval
-          </p>
         </motion.div>
       </div>
     </section>

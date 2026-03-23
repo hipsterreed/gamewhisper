@@ -12,7 +12,6 @@ const faqs = [
   { q: 'Can I change the hotkey?', a: 'Yes. The hotkey is configurable.' },
   { q: 'Is it Windows only?', a: 'Yes. Game Whisper is currently a Windows desktop app.' },
   { q: 'Can I choose my microphone and speakers?', a: 'Yes. Input and output devices are configurable.' },
-  { q: 'Is it free?', a: 'Game Whisper is currently available for free during early access.' },
 ]
 
 function FAQItem({ q, a }: { q: string; a: string }) {

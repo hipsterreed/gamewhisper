@@ -78,7 +78,7 @@ export function Overlay() {
     return () => window.removeEventListener('keydown', handleKey)
   }, [el.endSession])
 
-  const statusLabel = getStatusLabel(el.status, el.errorMessage, agentId)
+  const statusLabel = getStatusLabel(el.status, el.errorMessage, agentId, el.sourceCount)
 
   const overlayShell = (children: React.ReactNode) => (
     <div
@@ -408,6 +408,7 @@ function getStatusLabel(
   status: SessionStatus,
   errorMessage: string | null,
   agentId: string,
+  sourceCount: number | null,
 ): string {
   if (!agentId) return 'Set ElevenLabs Agent ID in Settings'
   switch (status) {
@@ -420,7 +421,10 @@ function getStatusLabel(
     case 'speaking':
       return 'Speaking…'
     case 'searching':
-      return 'Searching wiki…'
+      if (sourceCount !== null) {
+        return sourceCount === 0 ? 'No sources found' : `${sourceCount} source${sourceCount === 1 ? '' : 's'} found`
+      }
+      return 'Searching…'
     case 'error':
       return errorMessage ?? 'Error'
   }

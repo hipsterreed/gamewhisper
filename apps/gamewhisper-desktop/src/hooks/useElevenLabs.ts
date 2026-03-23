@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
-import { setDoc, updateDoc, arrayUnion, doc } from 'firebase/firestore'
+import { setDoc, updateDoc, arrayUnion, doc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { auth } from '../lib/firebase'
 import { db } from '../lib/firebase'
 import { useSessionsStore } from '../stores/sessions.store'
@@ -22,6 +22,7 @@ interface UseElevenLabsReturn {
   errorMessage: string | null
   sessionProgress: number
   sessionTimedOut: boolean
+  sourceCount: number | null
   startSession: (gameName: string, agentId: string, micDeviceId?: string, outputDeviceId?: string) => Promise<void>
   endSession: () => Promise<void>
 }
@@ -88,6 +89,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [sessionProgress, setSessionProgress] = useState(0)
   const [sessionTimedOut, setSessionTimedOut] = useState(false)
+  const [sourceCount, setSourceCount] = useState<number | null>(null)
 
   const conversationRef = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null)
   const animFrameRef = useRef<number>(0)
@@ -100,6 +102,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const sessionIdRef = useRef<string | null>(null)
   const messagesRef = useRef<Message[]>([])
   const gameNameRef = useRef<string>('')
+  const toolCallWatchRef = useRef<Unsubscribe | null>(null)
+  const toolCallsSeenRef = useRef<number>(0)
 
   const stopAmplitudeMonitor = useCallback(() => {
     if (animFrameRef.current) {
@@ -152,6 +156,11 @@ export function useElevenLabs(): UseElevenLabsReturn {
       clearTimeout(searchingTimerRef.current)
       searchingTimerRef.current = null
     }
+    if (toolCallWatchRef.current) {
+      toolCallWatchRef.current()
+      toolCallWatchRef.current = null
+    }
+    setSourceCount(null)
 
     // Save to local session history and fire-and-forget session/end
     const sessionId = sessionIdRef.current
@@ -265,6 +274,24 @@ export function useElevenLabs(): UseElevenLabsReturn {
           onConnect: () => {
             setStatus('listening')
             startTimeRef.current = Date.now()
+            toolCallsSeenRef.current = 0
+
+            // Watch session doc for tool call results so we can show source count
+            const watchUid = auth.currentUser?.uid
+            if (watchUid && sessionId) {
+              toolCallWatchRef.current = onSnapshot(
+                doc(db, 'users', watchUid, 'sessions', sessionId),
+                (snap) => {
+                  if (!snap.exists()) return
+                  const toolCalls = (snap.data()?.toolCalls ?? []) as Array<{ sources: string[] }>
+                  if (toolCalls.length > toolCallsSeenRef.current) {
+                    const latest = toolCalls[toolCalls.length - 1]
+                    setSourceCount(latest.sources?.length ?? 0)
+                    toolCallsSeenRef.current = toolCalls.length
+                  }
+                },
+              )
+            }
 
             // Fire-and-forget session/start
             getIdToken().then((token) => {
@@ -336,6 +363,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             }
             if (mode.mode === 'speaking') {
               setStatus('speaking')
+              setSourceCount(null) // response is coming in, clear the source count
             } else if (mode.mode === 'listening') {
               setStatus('listening')
             }
@@ -390,6 +418,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
     errorMessage,
     sessionProgress,
     sessionTimedOut,
+    sourceCount,
     startSession,
     endSession,
   }

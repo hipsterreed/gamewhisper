@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import logo from '../../assets/gamewhisper_icon_circle.png'
+import logoVideo from '../../assets/gamewhisper_icon_animation.mp4'
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false)
@@ -26,9 +26,22 @@ export default function Nav() {
       }}
     >
       <div style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', height: 64 }}>
-        <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-          <img src={logo} alt="Game Whisper" style={{ width: 28, height: 28, borderRadius: '50%' }} />
-          <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 17, letterSpacing: '-0.02em' }}>
+        <a href="#" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+          <video
+            src={logoVideo}
+            muted
+            playsInline
+            preload="metadata"
+            onLoadedMetadata={e => { e.currentTarget.currentTime = 0; e.currentTarget.pause() }}
+            style={{
+              width: 112,
+              height: 112,
+              objectFit: 'cover',
+              maskImage: 'radial-gradient(circle, black 10%, transparent 45%)',
+              WebkitMaskImage: 'radial-gradient(circle, black 10%, transparent 45%)',
+            }}
+          />
+          <span style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 17, letterSpacing: '-0.02em', marginLeft: -28, position: 'relative', zIndex: 1 }}>
             Game Whisper
           </span>
         </a>
