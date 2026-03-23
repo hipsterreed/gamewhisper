@@ -133,8 +133,11 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Remove DWM border on the settings window
+            // Remove DWM border on the settings and overlay windows
             if let Some(win) = app.get_webview_window("main") {
+                let _ = win.set_shadow(false);
+            }
+            if let Some(win) = app.get_webview_window("overlay") {
                 let _ = win.set_shadow(false);
             }
 
@@ -207,9 +210,9 @@ fn compute_overlay_position(
     const PAD: i32 = 24;
 
     match position {
-        "top-left"   => tauri::PhysicalPosition { x: mx + PAD,            y: my + PAD },
-        "top-center" => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + PAD },
-        "top-right"  => tauri::PhysicalPosition { x: mx + mw - ww - PAD, y: my + PAD },
+        "top-left"   => tauri::PhysicalPosition { x: mx + PAD,            y: my + PAD + 10 },
+        "top-center" => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + PAD + 10 },
+        "top-right"  => tauri::PhysicalPosition { x: mx + mw - ww - PAD, y: my + PAD + 10 },
         _            => tauri::PhysicalPosition { x: mx + (mw - ww) / 2, y: my + (mh - wh) / 2 },
     }
 }

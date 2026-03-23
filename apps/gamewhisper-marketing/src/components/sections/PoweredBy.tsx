@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion'
+import elevenLabsLogo from '../../assets/elevenlabs-logo-white.png'
+import firecrawlLogo from '../../assets/firecrawl-wordmark-white.svg'
 
 export default function PoweredBy() {
   return (
@@ -23,47 +25,10 @@ export default function PoweredBy() {
             Powered by
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 40, flexWrap: 'wrap', justifyContent: 'center' }}>
-            {/* ElevenLabs */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                height: 36,
-                padding: '0 20px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px dashed rgba(255,255,255,0.12)',
-                borderRadius: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-muted-bright)',
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: '-0.01em',
-                minWidth: 140,
-              }}>
-                ElevenLabs
-              </div>
-            </div>
-
-            {/* Divider dot */}
-            <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--color-border-bright)' }} />
-
-            {/* Firecrawl */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <div style={{
-                height: 36,
-                padding: '0 20px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px dashed rgba(255,255,255,0.12)',
-                borderRadius: 8,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'var(--color-muted-bright)',
-                fontSize: 14,
-                fontWeight: 600,
-                letterSpacing: '-0.01em',
-                minWidth: 140,
-              }}>
-                Firecrawl
-              </div>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <img src={elevenLabsLogo} alt="ElevenLabs" style={{ height: 24, opacity: 0.8 }} />
+            <div style={{ width: 1, height: 24, background: 'var(--color-border-bright)' }} />
+            <img src={firecrawlLogo} alt="Firecrawl" style={{ height: 36, opacity: 0.8 }} />
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--color-muted)', margin: 0, textAlign: 'center' }}>

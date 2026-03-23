@@ -28,38 +28,45 @@ export default function Hero() {
         pointerEvents: 'none',
       }} />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: 760 }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '80rem', padding: '0 24px' }}>
         {/* Headline */}
         <motion.h1
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1 }}
           style={{
-            fontSize: 'clamp(44px, 8vw, 80px)',
-            fontWeight: 800,
-            lineHeight: 1.05,
+            fontSize: 'clamp(48px, 8vw, 88px)',
+            fontWeight: 500,
+            lineHeight: 1,
             letterSpacing: '-0.04em',
             margin: '0 0 24px',
-            color: '#fff',
-          }}
+            paddingBottom: '0.1em',
+            background: 'linear-gradient(to bottom right, #ffffff 30%, rgba(255,255,255,0.4))',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            textWrap: 'balance',
+          } as React.CSSProperties}
         >
           Never alt-tab again.
         </motion.h1>
 
         {/* Subheadline */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
           style={{
-            fontSize: 'clamp(16px, 2.5vw, 20px)',
-            color: 'var(--color-muted-bright)',
+            fontSize: 'clamp(16px, 2vw, 20px)',
+            color: '#9ca3af',
             lineHeight: 1.6,
+            letterSpacing: '-0.015em',
             margin: '0 0 40px',
             maxWidth: 560,
             marginLeft: 'auto',
             marginRight: 'auto',
-          }}
+            textWrap: 'balance',
+          } as React.CSSProperties}
         >
           Press a hotkey, ask out loud, and get a spoken answer without alt-tabbing to a wiki.
         </motion.p>
@@ -111,7 +118,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.5 }}
-        style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 900, marginTop: 64 }}
+        style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '80rem', padding: '0 24px', marginTop: 64 }}
       >
         <div
           className="media-placeholder"

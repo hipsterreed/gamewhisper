@@ -28,7 +28,7 @@ body {
   padding: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -121,7 +121,7 @@ body {
 
 /* Section layout helper */
 .section-container {
-  max-width: 1200px;
+  max-width: 80rem;
   margin: 0 auto;
   padding: 0 24px;
 }
