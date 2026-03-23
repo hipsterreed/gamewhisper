@@ -299,13 +299,17 @@ function SourceCard({ url }: { url: string }) {
 }
 
 function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
+  const [expanded, setExpanded] = useState(false)
+  const preview = toolCall.content ? toolCall.content.slice(0, 280).trim() : null
+  const isLong = toolCall.content ? toolCall.content.length > 280 : false
+
   return (
     <div
-      className="rounded-xl px-3 py-2.5 border-l-2 flex flex-col gap-2"
+      className="rounded-xl px-3 py-2.5 flex flex-col gap-2"
       style={{
         background: 'rgba(255,255,255,0.02)',
         border: '1px solid rgba(255,255,255,0.06)',
-        borderLeftColor: 'rgba(99,102,241,0.4)',
+        borderLeft: '2px solid rgba(99,102,241,0.4)',
       }}
     >
       <div className="flex items-center gap-1.5">
@@ -314,12 +318,30 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
         </svg>
         <span className="text-[11px] text-white/35">Searched: </span>
         <span className="text-[11px] text-white/55 italic truncate">"{toolCall.query}"</span>
+        {toolCall.durationMs && (
+          <span className="ml-auto text-[10px] text-white/20 shrink-0">{(toolCall.durationMs / 1000).toFixed(1)}s</span>
+        )}
       </div>
       {toolCall.sources.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
           {toolCall.sources.map((url) => (
             <SourceCard key={url} url={url} />
           ))}
+        </div>
+      )}
+      {preview && (
+        <div>
+          <p className="text-[10px] text-white/30 leading-relaxed">
+            {expanded ? toolCall.content : preview}{!expanded && isLong ? '…' : ''}
+          </p>
+          {isLong && (
+            <button
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-0.5 text-[10px] text-indigo-400/50 hover:text-indigo-400/80 transition-colors"
+            >
+              {expanded ? 'Show less' : 'Show more'}
+            </button>
+          )}
         </div>
       )}
     </div>

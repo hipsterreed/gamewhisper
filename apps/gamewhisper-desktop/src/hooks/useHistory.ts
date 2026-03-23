@@ -8,13 +8,17 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'https://api.gamewhisper.io'
 
 export function useHistory() {
   const user = useAuthStore((s) => s.user)
-  const { sessions, isLoading, hasMore, fetchError, fetchInitial, fetchMore, removeSession, reset } = useHistoryStore()
+  const { sessions, isLoading, hasMore, fetchError, fetchMore, removeSession, reset } = useHistoryStore()
 
   useEffect(() => {
     if (user) {
-      fetchInitial(user.uid)
+      useHistoryStore.getState().subscribeRealtime(user.uid)
     } else {
+      useHistoryStore.getState().unsubscribe()
       reset()
+    }
+    return () => {
+      useHistoryStore.getState().unsubscribe()
     }
   }, [user?.uid]) // eslint-disable-line react-hooks/exhaustive-deps
 

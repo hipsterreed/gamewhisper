@@ -97,6 +97,7 @@ export abstract class SessionService {
     sources: string[],
     durationMs: number,
     preprocessed: boolean,
+    content?: string,
   ): Promise<void> {
     if (!db) return
 
@@ -109,13 +110,22 @@ export abstract class SessionService {
         return
       }
 
-      const toolCall = { query, sources, durationMs, preprocessed, recordedAt: Date.now() }
+      const toolCall = {
+        query,
+        sources,
+        durationMs,
+        preprocessed,
+        recordedAt: Date.now(),
+        ...(content !== undefined ? { content: content.slice(0, 4_000) } : {}),
+      }
+      log('info', 'session/recordToolCall: writing to Firestore', { sessionId, uid, query, sourceCount: sources.length, durationMs, hasContent: content !== undefined })
       await db
         .collection('users')
         .doc(uid)
         .collection('sessions')
         .doc(sessionId)
         .update({ toolCalls: FieldValue.arrayUnion(toolCall) })
+      log('info', 'session/recordToolCall: written', { sessionId, uid, query })
     } catch (err) {
       log('error', 'session/recordToolCall failed', { err: String(err), sessionId })
     }

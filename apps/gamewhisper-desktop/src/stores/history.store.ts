@@ -5,9 +5,11 @@ import {
   orderBy,
   limit,
   getDocs,
+  onSnapshot,
   startAfter,
   type QueryDocumentSnapshot,
   type DocumentData,
+  type Unsubscribe,
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 
@@ -23,6 +25,7 @@ export interface ToolCall {
   durationMs: number
   preprocessed: boolean
   recordedAt: number
+  content?: string
 }
 
 export interface FirestoreSession {
@@ -44,7 +47,9 @@ interface HistoryState {
   hasMore: boolean
   fetchError: string | null
   lastDoc: QueryDocumentSnapshot<DocumentData> | null
-  fetchInitial: (uid: string) => Promise<void>
+  _unsub: Unsubscribe | null
+  subscribeRealtime: (uid: string) => void
+  unsubscribe: () => void
   fetchMore: (uid: string) => Promise<void>
   prependSession: (session: FirestoreSession) => void
   removeSession: (sessionId: string) => void
@@ -57,25 +62,41 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   hasMore: true,
   fetchError: null,
   lastDoc: null,
+  _unsub: null,
 
-  async fetchInitial(uid: string) {
+  subscribeRealtime(uid: string) {
+    // Tear down any existing listener first
+    const prev = get()._unsub
+    if (prev) prev()
+
     set({ isLoading: true, sessions: [], lastDoc: null, hasMore: true, fetchError: null })
-    try {
-      const q = query(
-        collection(db, 'users', uid, 'sessions'),
-        orderBy('startedAt', 'desc'),
-        limit(PAGE_SIZE),
-      )
-      const snap = await getDocs(q)
-      const sessions = snap.docs.map((d) => ({ toolCalls: [] as ToolCall[], ...d.data() } as unknown) as FirestoreSession)
-      const lastDoc = snap.docs[snap.docs.length - 1] ?? null
-      set({ sessions, lastDoc, hasMore: snap.docs.length === PAGE_SIZE })
-    } catch (err) {
-      console.error('history/fetchInitial failed:', err)
-      set({ fetchError: String(err) })
-    } finally {
-      set({ isLoading: false })
-    }
+
+    const q = query(
+      collection(db, 'users', uid, 'sessions'),
+      orderBy('startedAt', 'desc'),
+      limit(PAGE_SIZE),
+    )
+
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const sessions = snap.docs.map((d) => ({ toolCalls: [] as ToolCall[], ...d.data() } as unknown) as FirestoreSession)
+        const lastDoc = snap.docs[snap.docs.length - 1] ?? null
+        set({ sessions, lastDoc, hasMore: snap.docs.length === PAGE_SIZE, isLoading: false })
+      },
+      (err) => {
+        console.error('history/subscribe failed:', err)
+        set({ fetchError: String(err), isLoading: false })
+      },
+    )
+
+    set({ _unsub: unsub })
+  },
+
+  unsubscribe() {
+    const fn = get()._unsub
+    if (fn) fn()
+    set({ _unsub: null })
   },
 
   async fetchMore(uid: string) {
@@ -116,6 +137,8 @@ export const useHistoryStore = create<HistoryState>((set, get) => ({
   },
 
   reset() {
-    set({ sessions: [], isLoading: false, hasMore: true, lastDoc: null, fetchError: null })
+    const fn = get()._unsub
+    if (fn) fn()
+    set({ sessions: [], isLoading: false, hasMore: true, lastDoc: null, fetchError: null, _unsub: null })
   },
 }))

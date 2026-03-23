@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { Conversation } from '@elevenlabs/client'
-import { setDoc, getDoc, doc } from 'firebase/firestore'
+import { setDoc, updateDoc, arrayUnion, doc } from 'firebase/firestore'
 import { auth } from '../lib/firebase'
 import { db } from '../lib/firebase'
 import { useSessionsStore } from '../stores/sessions.store'
@@ -174,8 +174,8 @@ export function useElevenLabs(): UseElevenLabsReturn {
         messages: [...messages],
         toolCalls: [],
       })
-      // Write directly to Firestore so history is available in all windows,
-      // then re-fetch to pick up server-written fields (topic, toolCalls).
+      // Write full session to Firestore — onSnapshot listener will propagate the
+      // update (including any server-written fields like toolCalls/topic) to the UI.
       if (uid) {
         setDoc(
           doc(db, 'users', uid, 'sessions', sessionId),
@@ -188,13 +188,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             messages: [...messages],
           },
           { merge: true },
-        ).then(async () => {
-          const snap = await getDoc(doc(db, 'users', uid, 'sessions', sessionId))
-          if (snap.exists()) {
-            const fresh = { toolCalls: [], ...snap.data() } as unknown as import('../stores/history.store').FirestoreSession
-            useHistoryStore.getState().prependSession(fresh)
-          }
-        }).catch(() => { })
+        ).catch(() => { })
       }
       const token = await getIdToken()
       if (token) {
@@ -235,6 +229,17 @@ export function useElevenLabs(): UseElevenLabsReturn {
       sessionIdRef.current = sessionId
       messagesRef.current = []
       gameNameRef.current = gameName
+
+      // Create the session doc immediately so incremental message writes work
+      // without waiting for the /session/start API response.
+      const uid = auth.currentUser?.uid
+      if (uid) {
+        setDoc(
+          doc(db, 'users', uid, 'sessions', sessionId),
+          { sessionId, uid, gameName: gameName || null, startedAt: Date.now(), endedAt: null, messages: [], toolCalls: [] },
+          { merge: true },
+        ).catch(() => {})
+      }
 
       try {
         // Separate mic stream for amplitude visualization
@@ -295,12 +300,27 @@ export function useElevenLabs(): UseElevenLabsReturn {
           },
 
           onMessage: (message) => {
+            const msgTimestamp = Date.now()
             if (message.source === 'ai') {
+              const msg: Message = { role: 'agent', content: message.message, timestamp: msgTimestamp }
               setAgentTranscript(message.message)
-              messagesRef.current.push({ role: 'agent', content: message.message, timestamp: Date.now() })
+              messagesRef.current.push(msg)
+              // Persist incrementally so the dashboard shows messages in real-time
+              const currentUid = auth.currentUser?.uid
+              const sid = sessionIdRef.current
+              if (currentUid && sid) {
+                updateDoc(doc(db, 'users', currentUid, 'sessions', sid), { messages: arrayUnion(msg) }).catch(() => {})
+              }
             } else if (message.source === 'user') {
+              const msg: Message = { role: 'user', content: message.message, timestamp: msgTimestamp }
               setUserTranscript(message.message)
-              messagesRef.current.push({ role: 'user', content: message.message, timestamp: Date.now() })
+              messagesRef.current.push(msg)
+              // Persist incrementally
+              const currentUid = auth.currentUser?.uid
+              const sid = sessionIdRef.current
+              if (currentUid && sid) {
+                updateDoc(doc(db, 'users', currentUid, 'sessions', sid), { messages: arrayUnion(msg) }).catch(() => {})
+              }
               // Start a timer: if agent doesn't speak within 1.5s, assume tool call in flight
               if (searchingTimerRef.current) clearTimeout(searchingTimerRef.current)
               searchingTimerRef.current = setTimeout(() => {
