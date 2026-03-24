@@ -215,23 +215,21 @@ export function useElevenLabs(): UseElevenLabsReturn {
       messagesRef.current = []
       gameNameRef.current = gameName
 
-      // Register the session server-side BEFORE connecting to ElevenLabs so that
-      // _sessionIndex exists when the first tool call arrives. Tool calls can fire
-      // immediately on connect, so this must happen first.
+      // Write the session doc BEFORE connecting to ElevenLabs so the server can
+      // look it up when the first tool call arrives.
       const uid = auth.currentUser?.uid
-      const token = await getIdToken()
-      if (token) {
-        await apiPost('/session/start', { sessionId, gameName: gameName || 'Unknown Game' }, token)
-      }
-
-      // Also create/merge the session doc client-side for real-time message writes.
       if (uid) {
-        setDoc(
+        await setDoc(
           doc(db, 'users', uid, 'sessions', sessionId),
           { sessionId, uid, gameName: gameName || null, startedAt: Date.now(), endedAt: null, messages: [], toolCalls: [] },
           { merge: true },
-        ).catch(() => {})
+        )
       }
+
+      // Fire-and-forget: notify the API (writes _sessionIndex server-side).
+      getIdToken().then((token) => {
+        if (token) apiPost('/session/start', { sessionId, gameName: gameName || 'Unknown Game' }, token)
+      })
 
       try {
         // Separate mic stream for amplitude visualization

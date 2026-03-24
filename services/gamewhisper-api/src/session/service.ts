@@ -12,9 +12,20 @@ interface Message {
 export abstract class SessionService {
   private static async lookupUid(sessionId: string): Promise<string | null> {
     if (!db) return null
-    const snap = await db.collection('_sessionIndex').doc(sessionId).get()
-    if (!snap.exists) return null
-    return (snap.data() as { uid: string }).uid
+
+    // Fast path: _sessionIndex (written by session/start)
+    const indexSnap = await db.collection('_sessionIndex').doc(sessionId).get()
+    if (indexSnap.exists) return (indexSnap.data() as { uid: string }).uid
+
+    // Fallback: the client writes users/{uid}/sessions/{sessionId} directly before
+    // connecting to ElevenLabs, so we can find the uid via collection group query.
+    const groupSnap = await db.collectionGroup('sessions').where('sessionId', '==', sessionId).limit(1).get()
+    if (groupSnap.empty) return null
+
+    const uid = (groupSnap.docs[0].data() as { uid: string }).uid
+    // Backfill the index so subsequent calls hit the fast path.
+    db.collection('_sessionIndex').doc(sessionId).set({ uid, createdAt: Date.now() }, { merge: true }).catch(() => {})
+    return uid
   }
 
   static async createSession(uid: string, sessionId: string, gameName: string): Promise<void> {
