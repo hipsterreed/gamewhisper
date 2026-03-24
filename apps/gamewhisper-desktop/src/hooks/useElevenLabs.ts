@@ -74,7 +74,6 @@ export function useElevenLabs(): UseElevenLabsReturn {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const progressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startTimeRef = useRef<number>(0)
-  const searchingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sessionIdRef = useRef<string | null>(null)
   const messagesRef = useRef<Message[]>([])
   const gameNameRef = useRef<string>('')
@@ -128,10 +127,6 @@ export function useElevenLabs(): UseElevenLabsReturn {
   }, [])
 
   const endSession = useCallback(async () => {
-    if (searchingTimerRef.current) {
-      clearTimeout(searchingTimerRef.current)
-      searchingTimerRef.current = null
-    }
     if (toolCallWatchRef.current) {
       toolCallWatchRef.current()
       toolCallWatchRef.current = null
@@ -322,22 +317,16 @@ export function useElevenLabs(): UseElevenLabsReturn {
               if (currentUid && sid) {
                 updateDoc(doc(db, 'users', currentUid, 'sessions', sid), { messages: arrayUnion(msg) }).catch(() => {})
               }
-              // Start a timer: if agent doesn't speak within 1.5s, assume tool call in flight
-              if (searchingTimerRef.current) clearTimeout(searchingTimerRef.current)
-              searchingTimerRef.current = setTimeout(() => {
-                setStatus((prev) => (prev === 'listening' ? 'searching' : prev))
-              }, 1500)
+              // Clear previous source count and enter searching for the new turn.
+              setSourceCount(null)
+              setStatus('searching')
             }
           },
 
           onModeChange: (mode) => {
-            if (searchingTimerRef.current) {
-              clearTimeout(searchingTimerRef.current)
-              searchingTimerRef.current = null
-            }
             if (mode.mode === 'speaking') {
               setStatus('speaking')
-              setSourceCount(null) // response is coming in, clear the source count
+              // Keep sourceCount visible while agent speaks — clear on next listening.
             } else if (mode.mode === 'listening') {
               setStatus('listening')
             }

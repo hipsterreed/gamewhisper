@@ -154,6 +154,7 @@ export function Overlay() {
         userTranscript={el.userTranscript}
         agentTranscript={el.agentTranscript}
         status={el.status}
+        sourceCount={el.sourceCount}
       />
 
       {/* Bottom: status text */}
@@ -359,43 +360,35 @@ interface TranscriptAreaProps {
   userTranscript: string
   agentTranscript: string
   status: SessionStatus
+  sourceCount: number | null
 }
 
-function TranscriptArea({ userTranscript, agentTranscript, status }: TranscriptAreaProps) {
+function TranscriptArea({ userTranscript, agentTranscript, status, sourceCount }: TranscriptAreaProps) {
   if (status === 'idle' || status === 'connecting') return null
-  if (status === 'searching') {
-    return (
-      <div className="px-4 pb-2">
-        {userTranscript && (
-          <div className="flex gap-2 items-start mb-1.5">
-            <span className="text-white/30 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">You</span>
-            <p className="text-white/70 text-xs leading-relaxed line-clamp-3">{userTranscript}</p>
-          </div>
-        )}
-        <div className="flex gap-2 items-center">
-          <span className="text-amber-400/60 text-[10px] uppercase tracking-widest shrink-0">GW</span>
-          <p className="text-amber-300/70 text-xs tracking-wide">Searching wiki…</p>
-        </div>
-      </div>
-    )
-  }
+
+  const showSearchLine = status === 'searching' || sourceCount !== null
+  const searchLabel = sourceCount !== null
+    ? sourceCount === 0 ? 'No sources found' : `Found ${sourceCount} source${sourceCount === 1 ? '' : 's'}`
+    : 'Searching the web…'
 
   return (
     <div className="px-4 pb-2 space-y-1.5">
       {userTranscript && (
         <div className="flex gap-2 items-start">
-          <span className="text-white/30 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">
-            You
-          </span>
+          <span className="text-white/30 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">You</span>
           <p className="text-white/70 text-xs leading-relaxed line-clamp-3">{userTranscript}</p>
         </div>
       )}
       {agentTranscript && (
         <div className="flex gap-2 items-start">
-          <span className="text-blue-400/60 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">
-            GW
-          </span>
+          <span className="text-blue-400/60 text-[10px] uppercase tracking-widest mt-0.5 shrink-0">GW</span>
           <p className="text-white/90 text-xs leading-relaxed line-clamp-3">{agentTranscript}</p>
+        </div>
+      )}
+      {showSearchLine && (
+        <div className="flex gap-2 items-center">
+          <span className="text-amber-400/60 text-[10px] uppercase tracking-widest shrink-0">GW</span>
+          <p className="text-amber-300/70 text-xs tracking-wide">{searchLabel}</p>
         </div>
       )}
     </div>
@@ -422,9 +415,9 @@ function getStatusLabel(
       return 'Speaking…'
     case 'searching':
       if (sourceCount !== null) {
-        return sourceCount === 0 ? 'No sources found' : `${sourceCount} source${sourceCount === 1 ? '' : 's'} found`
+        return sourceCount === 0 ? 'No sources found' : `Found ${sourceCount} source${sourceCount === 1 ? '' : 's'}`
       }
-      return 'Searching…'
+      return 'Searching the web…'
     case 'error':
       return errorMessage ?? 'Error'
   }
