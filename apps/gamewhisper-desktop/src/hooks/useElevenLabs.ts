@@ -215,9 +215,16 @@ export function useElevenLabs(): UseElevenLabsReturn {
       messagesRef.current = []
       gameNameRef.current = gameName
 
-      // Create the session doc immediately so incremental message writes work
-      // without waiting for the /session/start API response.
+      // Register the session server-side BEFORE connecting to ElevenLabs so that
+      // _sessionIndex exists when the first tool call arrives. Tool calls can fire
+      // immediately on connect, so this must happen first.
       const uid = auth.currentUser?.uid
+      const token = await getIdToken()
+      if (token) {
+        await apiPost('/session/start', { sessionId, gameName: gameName || 'Unknown Game' }, token)
+      }
+
+      // Also create/merge the session doc client-side for real-time message writes.
       if (uid) {
         setDoc(
           doc(db, 'users', uid, 'sessions', sessionId),
@@ -268,13 +275,6 @@ export function useElevenLabs(): UseElevenLabsReturn {
                 },
               )
             }
-
-            // Fire-and-forget session/start
-            getIdToken().then((token) => {
-              if (token) {
-                apiPost('/session/start', { sessionId, gameName: gameName || 'Unknown Game' }, token)
-              }
-            })
 
             // 60-second session timeout — show message, Overlay handles auto-hide
             timeoutRef.current = setTimeout(() => {
