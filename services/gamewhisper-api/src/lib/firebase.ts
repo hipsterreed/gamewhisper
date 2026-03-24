@@ -9,19 +9,23 @@ if (!getApps().length) {
   if (!FIREBASE_PROJECT_ID || !FIREBASE_CLIENT_EMAIL || !FIREBASE_PRIVATE_KEY) {
     log('warn', 'firebase: missing env vars — Firestore writes and Firebase auth disabled')
   } else {
-    // Railway sometimes double-escapes newlines or wraps the value in quotes
-    const privateKey = FIREBASE_PRIVATE_KEY
-      .replace(/^["']|["']$/g, '')   // strip surrounding quotes if present
-      .replace(/\\n/g, '\n')          // literal \n → real newline
-      .trim()
+    try {
+      // Railway sometimes double-escapes newlines or wraps the value in quotes
+      const privateKey = FIREBASE_PRIVATE_KEY
+        .replace(/^["']|["']$/g, '')   // strip surrounding quotes if present
+        .replace(/\\n/g, '\n')          // literal \n → real newline
+        .trim()
 
-    initializeApp({
-      credential: cert({
-        projectId: FIREBASE_PROJECT_ID,
-        clientEmail: FIREBASE_CLIENT_EMAIL,
-        privateKey,
-      }),
-    })
+      initializeApp({
+        credential: cert({
+          projectId: FIREBASE_PROJECT_ID,
+          clientEmail: FIREBASE_CLIENT_EMAIL,
+          privateKey,
+        }),
+      })
+    } catch (err) {
+      log('warn', 'firebase: failed to initialize — Firestore writes and Firebase auth disabled', { err: String(err) })
+    }
   }
 }
 

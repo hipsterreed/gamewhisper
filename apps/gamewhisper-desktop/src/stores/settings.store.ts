@@ -7,6 +7,7 @@ interface SettingsState {
   hotkey: string
   overlayTransparent: boolean
   overlayPosition: OverlayPosition
+  monitorIndex: number
   elevenLabsAgentId: string
   elevenLabsApiKey: string
   micDeviceId: string
@@ -17,6 +18,7 @@ interface SettingsState {
   setHotkey: (hotkey: string) => Promise<void>
   setOverlayTransparent: (transparent: boolean) => Promise<void>
   setOverlayPosition: (position: OverlayPosition) => Promise<void>
+  setMonitorIndex: (index: number) => Promise<void>
   setElevenLabsConfig: (agentId: string, apiKey: string) => Promise<void>
   setAudioDevices: (micDeviceId: string, outputDeviceId: string) => Promise<void>
 }
@@ -42,6 +44,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   hotkey: 'Alt+G',
   overlayTransparent: true,
   overlayPosition: 'center',
+  monitorIndex: 0,
   elevenLabsAgentId: '',
   elevenLabsApiKey: '',
   micDeviceId: '',
@@ -57,9 +60,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const overlayPosition = (await store.get<OverlayPosition>('overlayPosition')) ?? 'center'
       const elevenLabsAgentId = (await store.get<string>('elevenLabsAgentId')) ?? ''
       const elevenLabsApiKey = (await store.get<string>('elevenLabsApiKey')) ?? ''
+      const monitorIndex = (await store.get<number>('monitorIndex')) ?? 0
       const micDeviceId = (await store.get<string>('micDeviceId')) ?? ''
       const outputDeviceId = (await store.get<string>('outputDeviceId')) ?? ''
-      set({ hotkey, overlayTransparent, overlayPosition, elevenLabsAgentId, elevenLabsApiKey, micDeviceId, outputDeviceId, initialized: true })
+      set({ hotkey, overlayTransparent, overlayPosition, monitorIndex, elevenLabsAgentId, elevenLabsApiKey, micDeviceId, outputDeviceId, initialized: true })
     } catch {
       set({ initialized: true })
     }
@@ -78,6 +82,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   async setOverlayPosition(overlayPosition) {
     set({ overlayPosition })
     await persist({ overlayPosition })
+  },
+
+  async setMonitorIndex(monitorIndex) {
+    set({ monitorIndex })
+    await persist({ monitorIndex })
   },
 
   async setElevenLabsConfig(elevenLabsAgentId, elevenLabsApiKey) {

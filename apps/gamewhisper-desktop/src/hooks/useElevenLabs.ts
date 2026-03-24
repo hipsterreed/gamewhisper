@@ -53,32 +53,8 @@ async function apiPost(path: string, body: unknown, token: string): Promise<void
   }
 }
 
-const NEW_USER_GREETINGS = [
-  'Ah, {game_name}, need help?',
-  'Need help in {game_name}?',
-  'Playing {game_name}? What do you need?',
-  'What can I help you with in {game_name}?',
-]
-
-const RETURNING_USER_GREETINGS = [
-  "What's up?",
-  'How can I help?',
-  'What do you need?',
-  'Go ahead.',
-]
-
 function pickGreeting(gameName: string): string {
-  const oneHourAgo = Date.now() - 60 * 60 * 1000
-  const recentSession = useHistoryStore
-    .getState()
-    .sessions.some((s) => s.startedAt >= oneHourAgo)
-
-  if (recentSession) {
-    return RETURNING_USER_GREETINGS[Math.floor(Math.random() * RETURNING_USER_GREETINGS.length)]
-  }
-
-  const template = NEW_USER_GREETINGS[Math.floor(Math.random() * NEW_USER_GREETINGS.length)]
-  return template.replace('{game_name}', gameName || 'that game')
+  return `I see you're playing ${gameName || 'a game'}, how can I help?`
 }
 
 export function useElevenLabs(): UseElevenLabsReturn {

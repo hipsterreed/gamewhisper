@@ -9,6 +9,14 @@ interface AudioDevice {
   label: string
 }
 
+interface MonitorInfo {
+  index: number
+  name: string
+  width: number
+  height: number
+  is_primary: boolean
+}
+
 export function Settings() {
   return (
     <div
@@ -56,11 +64,13 @@ export function SettingsContent() {
     hotkey,
     overlayTransparent,
     overlayPosition,
+    monitorIndex,
     micDeviceId,
     outputDeviceId,
     setHotkey,
     setOverlayTransparent,
     setOverlayPosition,
+    setMonitorIndex,
     setAudioDevices,
   } = useSettingsStore()
 
@@ -72,6 +82,7 @@ export function SettingsContent() {
 
   const [micDevices, setMicDevices] = useState<AudioDevice[]>([])
   const [outputDevices, setOutputDevices] = useState<AudioDevice[]>([])
+  const [monitors, setMonitors] = useState<MonitorInfo[]>([])
 
   useEffect(() => {
     async function loadDevices() {
@@ -98,6 +109,7 @@ export function SettingsContent() {
       }
     }
     loadDevices()
+    invoke<MonitorInfo[]>('get_monitors').then(setMonitors).catch(() => {})
   }, [])
 
   function handleHotkeyCapture(e: React.KeyboardEvent) {
@@ -159,6 +171,29 @@ export function SettingsContent() {
             }}
           />
         </Row>
+        {monitors.length > 1 && (
+          <>
+            <Divider />
+            <Row label="Monitor" hint="Which display the overlay appears on">
+              <select
+                value={monitorIndex}
+                onChange={(e) => {
+                  const idx = Number(e.target.value)
+                  setMonitorIndex(idx)
+                  invoke('set_monitor', { index: idx })
+                }}
+                className="text-xs rounded-md px-2.5 py-1.5 border border-white/12 bg-white/[0.06] text-white/80 hover:border-white/25 transition-all cursor-pointer outline-none focus:border-blue-500/70 focus:ring-1 focus:ring-blue-500/30"
+                style={{ maxWidth: 200 }}
+              >
+                {monitors.map((m) => (
+                  <option key={m.index} value={m.index} style={{ background: '#0d0d1a' }}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </Row>
+          </>
+        )}
         <Divider />
         <Row label="Transparent background" hint="Disable if overlay looks broken on your GPU">
           <Toggle enabled={overlayTransparent} onChange={(v) => setOverlayTransparent(v)} />

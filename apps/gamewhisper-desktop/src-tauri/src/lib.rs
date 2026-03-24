@@ -16,6 +16,16 @@ pub struct AppState {
     pub current_game: Mutex<Option<String>>,
     pub hotkey: Mutex<String>,
     pub overlay_position: Mutex<String>,
+    pub monitor_index: Mutex<usize>,
+}
+
+#[derive(serde::Serialize)]
+pub struct MonitorInfo {
+    pub index: usize,
+    pub name: String,
+    pub width: u32,
+    pub height: u32,
+    pub is_primary: bool,
 }
 
 /// Convert a frontend hotkey string like "Alt+G" or "Control+Shift+F1"
@@ -70,6 +80,7 @@ pub fn run() {
             current_game: Mutex::new(None),
             hotkey: Mutex::new("Alt+G".to_string()),
             overlay_position: Mutex::new("center".to_string()),
+            monitor_index: Mutex::new(0),
         })
         .plugin(
             tauri_plugin_log::Builder::default()
@@ -97,11 +108,17 @@ pub fn run() {
                 .and_then(|s| s.get("overlayPosition"))
                 .and_then(|v| v.as_str().map(|s| s.to_string()))
                 .unwrap_or_else(|| "center".to_string());
+            let saved_monitor_index = store
+                .as_ref()
+                .and_then(|s| s.get("monitorIndex"))
+                .and_then(|v| v.as_u64().map(|n| n as usize))
+                .unwrap_or(0);
 
             {
                 let state = app.state::<AppState>();
                 *state.hotkey.lock().unwrap() = saved_hotkey.clone();
                 *state.overlay_position.lock().unwrap() = saved_position;
+                *state.monitor_index.lock().unwrap() = saved_monitor_index;
             }
 
             // --- System tray ---
@@ -139,6 +156,15 @@ pub fn run() {
             }
             if let Some(win) = app.get_webview_window("overlay") {
                 let _ = win.set_shadow(false);
+                // Re-assert always-on-top whenever the overlay loses focus so it
+                // stays above windowed-borderless games (e.g. Stardew Valley) that
+                // also claim topmost z-order when activated.
+                let win_clone = win.clone();
+                win.on_window_event(move |event| {
+                    if let tauri::WindowEvent::Focused(false) = event {
+                        let _ = win_clone.set_always_on_top(true);
+                    }
+                });
             }
 
             // --- Register saved hotkey ---
@@ -153,6 +179,8 @@ pub fn run() {
             commands::game_detection::detect_active_game_cmd,
             update_hotkey,
             set_overlay_position,
+            get_monitors,
+            set_monitor,
             start_oauth_server,
             open_settings_window,
         ])
@@ -181,7 +209,8 @@ fn handle_hotkey(app: &tauri::AppHandle) {
             let position = {
                 let x = state.overlay_position.lock().unwrap().clone(); x
             };
-            if let Ok(Some(monitor)) = overlay.primary_monitor() {
+            let monitor_index = *state.monitor_index.lock().unwrap();
+            if let Some(monitor) = get_target_monitor(&overlay, monitor_index) {
                 let win_size = overlay.outer_size().unwrap_or(tauri::PhysicalSize { width: 480, height: 320 });
                 let pos = compute_overlay_position(&monitor, win_size, &position);
                 let _ = overlay.set_position(pos);
@@ -193,6 +222,15 @@ fn handle_hotkey(app: &tauri::AppHandle) {
             let _ = overlay.emit("game-detected", payload);
         }
         *visible = true;
+    }
+}
+
+fn get_target_monitor(overlay: &tauri::WebviewWindow, index: usize) -> Option<tauri::Monitor> {
+    let monitors = overlay.available_monitors().ok()?;
+    if index < monitors.len() {
+        monitors.into_iter().nth(index)
+    } else {
+        overlay.primary_monitor().ok().flatten()
     }
 }
 
@@ -265,14 +303,43 @@ fn set_overlay_position(app: tauri::AppHandle, position: String) {
     let state = app.state::<AppState>();
     *state.overlay_position.lock().unwrap() = position.clone();
 
-    // Move the overlay immediately if it's currently visible
     if let Some(overlay) = app.get_webview_window("overlay") {
-        if let Ok(Some(monitor)) = overlay.primary_monitor() {
+        let monitor_index = *state.monitor_index.lock().unwrap();
+        if let Some(monitor) = get_target_monitor(&overlay, monitor_index) {
             let win_size = overlay.outer_size().unwrap_or(tauri::PhysicalSize { width: 480, height: 320 });
             let pos = compute_overlay_position(&monitor, win_size, &position);
             let _ = overlay.set_position(pos);
         }
     }
+}
+
+#[tauri::command]
+fn get_monitors(app: tauri::AppHandle) -> Vec<MonitorInfo> {
+    let Some(win) = app.get_webview_window("overlay") else { return vec![] };
+    let primary_name = win.primary_monitor().ok().flatten().and_then(|m| m.name().map(|s| s.to_string()));
+    let monitors = win.available_monitors().unwrap_or_default();
+    monitors.into_iter().enumerate().map(|(i, m)| {
+        let raw_name = m.name().map(|s| s.to_string());
+        let is_primary = primary_name.as_ref().is_some_and(|p| raw_name.as_ref() == Some(p));
+        let label = if is_primary {
+            format!("Monitor {} (Primary)", i + 1)
+        } else {
+            format!("Monitor {}", i + 1)
+        };
+        MonitorInfo {
+            index: i,
+            name: label,
+            width: m.size().width,
+            height: m.size().height,
+            is_primary,
+        }
+    }).collect()
+}
+
+#[tauri::command]
+fn set_monitor(app: tauri::AppHandle, index: usize) {
+    let state = app.state::<AppState>();
+    *state.monitor_index.lock().unwrap() = index;
 }
 
 /// Binds a one-shot HTTP server on a random loopback port, waits for the OAuth

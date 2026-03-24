@@ -26,7 +26,7 @@ export abstract class WikiService {
   static async search(game: string, query: string): Promise<{ text: string; sources: string[] }> {
     const domains = GAME_DOMAINS[game] ?? []
 
-    const req: Record<string, unknown> = { limit: 2 }
+    const req: Record<string, unknown> = { limit: 3 }
     if (domains.length > 0) {
       req.includeDomains = domains
     }
@@ -54,51 +54,20 @@ export abstract class WikiService {
       return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
     }
 
-    const urls = items.map((doc) => doc.url ?? '').filter(Boolean)
-
-    log('info', 'firecrawl/scrape: starting', { urlCount: urls.length, urls })
-    const scrapeStart = Date.now()
-
-    const scrapeResults = await Promise.all(
-      urls.map((url) =>
-        WikiService.fc.scrape(url, { formats: ['markdown'], onlyMainContent: true }).catch((e: unknown) => {
-          log('warn', 'firecrawl/scrape: page failed', { url, err: String(e) })
-          return null
-        }),
-      ),
-    )
-
-    log('info', 'firecrawl/scrape: all done', {
-      urlCount: urls.length,
-      successCount: scrapeResults.filter(Boolean).length,
-      durationMs: Date.now() - scrapeStart,
-      results: urls.map((url, i) => ({
-        url,
-        success: scrapeResults[i] !== null,
-        chars: (() => { const s = scrapeResults[i]; return s && 'markdown' in s ? (s as { markdown?: string }).markdown?.length ?? 0 : 0 })(),
-      })),
-    })
-
     const sources: string[] = []
     const parts: string[] = []
 
-    for (let i = 0; i < urls.length; i++) {
-      const url = urls[i]
-      const scraped = scrapeResults[i]
-      const markdown =
-        scraped && 'markdown' in scraped ? (scraped.markdown ?? '') : (items[i].markdown ?? items[i].description ?? '')
-      const content = markdown.slice(0, MAX_CHARS_PER_SOURCE)
-      if (content) {
+    for (const item of items) {
+      const url = item.url ?? ''
+      const content = (item.markdown ?? item.description ?? '').slice(0, MAX_CHARS_PER_SOURCE)
+      if (url && content) {
         sources.push(url)
         parts.push(`Source: ${url}\n${content}`)
-        log('info', 'firecrawl/scrape: using source', { url, charsTruncated: markdown.length > MAX_CHARS_PER_SOURCE, contentChars: content.length })
-      } else {
-        log('warn', 'firecrawl/scrape: empty content for url', { url })
       }
     }
 
     if (!parts.length) {
-      log('warn', 'firecrawl/search: all sources empty after scrape', { game, query })
+      log('warn', 'firecrawl/search: no content in search results', { game, query })
       return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
     }
 
