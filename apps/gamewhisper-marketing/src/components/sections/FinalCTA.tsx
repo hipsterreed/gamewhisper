@@ -75,7 +75,7 @@ export default function FinalCTA({ onTryLive }: FinalCTAProps) {
             transition={{ duration: 0.6, delay: 0.3 }}
             style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}
           >
-            <a href="#" className="btn-secondary" style={{ fontSize: 16, padding: '14px 32px', opacity: 0.6 }}>
+            <a href="#" className="btn-secondary hide-mobile" style={{ fontSize: 16, padding: '14px 32px', opacity: 0.6 }}>
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
               Download for Windows
             </a>
