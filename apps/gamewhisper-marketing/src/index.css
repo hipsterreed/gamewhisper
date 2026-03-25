@@ -191,3 +191,25 @@ body {
 .card:hover {
   border-color: var(--color-border-bright);
 }
+
+@media (max-width: 640px) {
+  .problem-section { padding: 48px 24px !important; }
+  .problem-video { width: 92% !important; }
+  .poweredby-logos { gap: 20px !important; }
+  .poweredby-elevenlabs { height: 16px !important; }
+  .poweredby-firecrawl { height: 24px !important; }
+  .poweredby-divider { height: 16px !important; }
+  .hide-mobile { display: none !important; }
+  .mobile-break { display: block; }
+  .hero-wisp-row { flex-direction: column !important; }
+  .hero-wisp { margin-left: 0 !important; }
+  .hero-subheadline { margin-left: 0 !important; }
+  .nav-logo { margin-left: -40px !important; margin-top: 10px !important; }
+  .nav-powered { flex-direction: column !important; gap: 2px !important; text-align: right; }
+  .nav-powered span { font-size: 8px !important; }
+  .nav-powered-logos img { height: 12px !important; }
+  .nav-powered-logos img[alt="Firecrawl"] { height: 18px !important; }
+  .nav-powered-logos { gap: 8px !important; }
+}
+
+.mobile-break { display: none; }

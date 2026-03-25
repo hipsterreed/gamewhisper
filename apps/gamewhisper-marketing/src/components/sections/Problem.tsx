@@ -6,7 +6,7 @@ export default function Problem() {
   const inView = useInView(ref, { once: true, margin: '-80px' })
 
   return (
-    <section style={{ padding: '100px 24px' }}>
+    <section className="problem-section" style={{ padding: '100px 24px' }}>
       <div className="section-container">
         <motion.div
           ref={ref}
@@ -41,6 +41,7 @@ export default function Problem() {
             loop
             muted
             playsInline
+            className="problem-video"
             style={{
               width: '50%',
               display: 'block',

@@ -14,7 +14,7 @@ export default function Hero({ onTryLive }: HeroProps) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '100px 24px 80px',
+        padding: '100px 0 80px',
         position: 'relative',
         overflow: 'hidden',
         textAlign: 'center',
@@ -35,7 +35,7 @@ export default function Hero({ onTryLive }: HeroProps) {
 
       <div style={{
         position: 'relative', zIndex: 1,
-        width: '100%', maxWidth: '80rem', padding: '0 24px',
+        width: '100%', maxWidth: '80rem', padding: '0 clamp(12px, 4vw, 24px)',
       }}>
         {/* Headline */}
         <motion.h1
@@ -53,10 +53,9 @@ export default function Hero({ onTryLive }: HeroProps) {
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            textWrap: 'balance',
           } as React.CSSProperties}
         >
-          Never alt-tab again.
+          Never alt-tab<br className="mobile-break" /> again.
         </motion.h1>
 
         {/* Video + subheadline row */}
@@ -64,9 +63,11 @@ export default function Hero({ onTryLive }: HeroProps) {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
+          className="hero-wisp-row"
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 40 }}
         >
           <video
+            className="hero-wisp"
             src={logoVideo}
             autoPlay
             loop
@@ -82,6 +83,7 @@ export default function Hero({ onTryLive }: HeroProps) {
             }}
           />
           <p
+            className="hero-subheadline"
             style={{
               fontSize: 'clamp(15px, 1.6vw, 19px)',
               color: '#9ca3af',
@@ -106,7 +108,7 @@ export default function Hero({ onTryLive }: HeroProps) {
           transition={{ duration: 0.6, delay: 0.35 }}
           style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 28 }}
         >
-          <a href="#download" className="btn-secondary" style={{ fontSize: 16, padding: '14px 32px', opacity: 0.6 }}>
+          <a href="#download" className="btn-secondary hide-mobile" style={{ fontSize: 16, padding: '14px 32px', opacity: 0.6 }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Download for Windows
           </a>

@@ -25,10 +25,10 @@ export default function PoweredBy() {
             Powered by
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
-            <img src={elevenLabsLogo} alt="ElevenLabs" style={{ height: 24, opacity: 0.8 }} />
-            <div style={{ width: 1, height: 24, background: 'var(--color-border-bright)' }} />
-            <img src={firecrawlLogo} alt="Firecrawl" style={{ height: 36, opacity: 0.8 }} />
+          <div className="poweredby-logos" style={{ display: 'flex', alignItems: 'center', gap: 48, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <img className="poweredby-elevenlabs" src={elevenLabsLogo} alt="ElevenLabs" style={{ height: 24, opacity: 0.8 }} />
+            <div className="poweredby-divider" style={{ width: 1, height: 24, background: 'var(--color-border-bright)' }} />
+            <img className="poweredby-firecrawl" src={firecrawlLogo} alt="Firecrawl" style={{ height: 36, opacity: 0.8 }} />
           </div>
 
         </motion.div>

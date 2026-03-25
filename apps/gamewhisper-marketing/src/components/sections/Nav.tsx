@@ -27,8 +27,8 @@ export default function Nav() {
         borderBottom: scrolled ? '1px solid rgba(255,255,255,0.07)' : '1px solid transparent',
       }}
     >
-      <div className="nav-inner" style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', height: 64 }}>
-        <a href="#" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+      <div className="nav-inner" style={{ maxWidth: '80rem', margin: '0 auto', padding: '0 clamp(4px, 2vw, 24px)', display: 'flex', alignItems: 'center', height: 64 }}>
+        <a href="#" className="nav-logo" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
           <video
             src={logoVideo}
             muted
@@ -48,7 +48,7 @@ export default function Nav() {
           </span>
         </a>
 
-        <div className="nav-powered" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div className="nav-powered" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Powered by
           </span>
