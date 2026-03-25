@@ -25,7 +25,7 @@ export abstract class WikiService {
     const searchStart = Date.now()
 
     const searchResult = await Promise.race([
-      WikiService.fc.search(`${game} ${query}`, { limit: 3 } as never),
+      WikiService.fc.search(`${game} ${query}`, { limit: 2 } as never),
       hardTimeout,
     ])
     const items = (searchResult.web as WebResult[] | undefined) ?? []
