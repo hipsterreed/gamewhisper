@@ -41,24 +41,36 @@ export abstract class WikiService {
       return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
     }
 
+    // Filter out URLs that can't yield useful text content (video sites etc.)
+    const UNSCRAPPABLE = ['youtube.com', 'youtu.be', 'twitch.tv', 'tiktok.com']
+    const scrapeUrls = urls.filter((u) => !UNSCRAPPABLE.some((d) => u.includes(d)))
+
+    if (!scrapeUrls.length) {
+      log('warn', 'firecrawl/batch-scrape: all URLs were filtered out', { urls })
+      return { text: 'No wiki data found for that query. Please answer based on your training data.', sources: [] }
+    }
+
     // Step 2: batch scrape all URLs for full page content
-    // maxAge uses cache so repeat queries on the same wiki pages are near-instant
-    log('info', 'firecrawl/batch-scrape: starting', { urls })
+    // ScrapeOptions must be nested under `options` per BatchScrapeOptions type
+    // maxAge caches wiki pages for 1 hour so repeat queries are near-instant
+    log('info', 'firecrawl/batch-scrape: starting', { urls: scrapeUrls })
     const scrapeStart = Date.now()
 
     const scrapeResult = await Promise.race([
-      WikiService.fc.batchScrape(urls, {
-        formats: ['markdown'],
-        onlyMainContent: true,
-        maxAge: SCRAPE_CACHE_MAX_AGE_MS,
-      } as never),
+      WikiService.fc.batchScrape(scrapeUrls, {
+        options: {
+          formats: ['markdown'],
+          onlyMainContent: true,
+          maxAge: SCRAPE_CACHE_MAX_AGE_MS,
+        },
+      }),
       timeout,
     ])
 
-    const scraped = (scrapeResult as { data?: Array<{ url?: string; markdown?: string }> }).data ?? []
+    const scraped = scrapeResult.data ?? []
 
     log('info', 'firecrawl/batch-scrape: done', {
-      requested: urls.length,
+      requested: scrapeUrls.length,
       received: scraped.length,
       durationMs: Date.now() - scrapeStart,
     })
@@ -68,7 +80,7 @@ export abstract class WikiService {
     const parts: string[] = []
 
     for (const page of scraped) {
-      const url = page.url ?? ''
+      const url = page.metadata?.url ?? ''
       const content = (page.markdown ?? '').slice(0, MAX_CHARS_PER_SOURCE)
       if (url && content) {
         sources.push(url)
