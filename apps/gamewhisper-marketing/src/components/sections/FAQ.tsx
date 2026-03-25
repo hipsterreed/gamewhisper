@@ -3,7 +3,7 @@ import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { useRef } from 'react'
 
 const faqs = [
-  { q: 'What games does Game Whisper support?', a: 'Game Whisper supports selected PC games today and is expanding over time. It works best in games where players frequently look up quests, crafting, item locations, builds, and progression help.' },
+  { q: 'What games does Game Whisper support?', a: 'Game Whisper currently reads from your Steam library, so any game you own on Steam is supported.' },
   { q: 'Does it work in fullscreen?', a: 'Game Whisper is designed to work as an overlay while you play supported games.' },
   { q: 'Do I need to alt-tab or click anything?', a: 'No. Press your hotkey, ask naturally, and stay in the game.' },
   { q: 'How does it know what game I\'m playing?', a: 'Game Whisper detects the active game and uses that context automatically.' },

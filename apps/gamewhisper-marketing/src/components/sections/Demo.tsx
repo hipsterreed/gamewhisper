@@ -1,5 +1,6 @@
 import { motion, useInView } from 'framer-motion'
 import { useRef } from 'react'
+import coverImage from '../../assets/gamewhisper_social_final_cover.jpg'
 
 export default function Demo() {
   const ref = useRef(null)
@@ -36,12 +37,13 @@ export default function Demo() {
           style={{ position: 'relative' }}
         >
           <video
-            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_demo_2.mp4?alt=media&token=13fd892d-fd31-45bd-8ee7-ff44732d8803"
+            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_social_final.mp4?alt=media&token=5f9c86c1-3c03-455c-9a97-266ac34ea6af"
             controls
             playsInline
+            poster={coverImage}
             style={{
               width: '100%',
-              maxWidth: 900,
+              maxWidth: 340,
               display: 'block',
               margin: '0 auto',
               borderRadius: 16,

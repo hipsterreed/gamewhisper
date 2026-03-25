@@ -102,12 +102,9 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.35 }}
           style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center', marginBottom: 28 }}
         >
-          <a href="#download" className="btn-primary" style={{ fontSize: 16, padding: '14px 32px', flexDirection: 'column', gap: 2 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
-              Download for Windows
-            </div>
-            <span style={{ fontSize: 11, opacity: 0.6 }}>(Alpha)</span>
+          <a href="#download" className="btn-primary" style={{ fontSize: 16, padding: '14px 32px' }}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            Download for Windows
           </a>
           <a href="#demo" className="btn-secondary" style={{ fontSize: 16, padding: '14px 28px' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" /><path d="M6.5 5.5l5 2.5-5 2.5V5.5z" fill="currentColor" /></svg>
