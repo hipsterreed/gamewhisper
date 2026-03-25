@@ -47,53 +47,55 @@ export abstract class WikiService {
       .map((d) => d.url)
       .filter((u): u is string => !!u && !UNSCRAPPABLE.some((d) => u.includes(d)))
 
-    // Step 2: batch scrape for full page content, but race against a hard 5s deadline.
-    // If scrape is too slow (cold cache), fall back to the search result descriptions
-    // so the agent always gets a response in seconds.
-    log('info', 'firecrawl/batch-scrape: starting', { urls: scrapeUrls })
+    // Step 2: fire individual scrapes in parallel, return as soon as the first one
+    // comes back with content. Much faster than waiting for a batch job to finish.
+    log('info', 'firecrawl/scrape: racing individual scrapes', { urls: scrapeUrls })
     const scrapeStart = Date.now()
 
+    type ScrapeWin = { url: string; content: string }
     const scrapeDeadline = new Promise<null>((resolve) => setTimeout(() => resolve(null), SCRAPE_TIMEOUT_MS))
 
-    const scrapeResult = scrapeUrls.length
-      ? await Promise.race([
-          WikiService.fc.batchScrape(scrapeUrls, {
-            options: {
-              formats: ['markdown'],
-              onlyMainContent: true,
-              fastMode: true,
-              maxAge: SCRAPE_CACHE_MAX_AGE_MS,
-            },
-          }),
-          scrapeDeadline,
-        ])
-      : null
+    const scrapeRaces = scrapeUrls.map((url) =>
+      WikiService.fc
+        .scrape(url, {
+          formats: ['markdown'],
+          onlyMainContent: true,
+          fastMode: true,
+          maxAge: SCRAPE_CACHE_MAX_AGE_MS,
+        } as never)
+        .then((result) => {
+          const content = (result.markdown ?? '').trim()
+          if (!content) throw new Error('no content')
+          return { url, content } as ScrapeWin
+        }),
+    )
 
+    const winner = await Promise.race([Promise.any(scrapeRaces), scrapeDeadline])
     const scrapeDurationMs = Date.now() - scrapeStart
-    const timedOut = scrapeResult === null
 
-    if (timedOut) {
-      log('warn', 'firecrawl/batch-scrape: timed out, falling back to search snippets', { urls: scrapeUrls, scrapeDurationMs })
+    if (!winner) {
+      log('warn', 'firecrawl/scrape: all timed out, falling back to search snippets', { urls: scrapeUrls, scrapeDurationMs })
     } else {
-      log('info', 'firecrawl/batch-scrape: done', {
-        requested: scrapeUrls.length,
-        received: scrapeResult.data?.length ?? 0,
-        scrapeDurationMs,
-      })
+      log('info', 'firecrawl/scrape: got first result', { url: winner.url, scrapeDurationMs, chars: winner.content.length })
     }
 
-    // Step 3: build response — prefer full scraped content, fall back to search snippets
+    // Step 3: build response — prefer scraped content, fall back to search snippets
     const sources: string[] = []
     const parts: string[] = []
 
-    if (!timedOut) {
-      for (const page of scrapeResult.data ?? []) {
-        const url = page.metadata?.url ?? ''
-        const content = (page.markdown ?? '').slice(0, MAX_CHARS_PER_SOURCE)
-        if (url && content) {
-          sources.push(url)
-          parts.push(`Source: ${url}\n${content}`)
-        }
+    if (winner) {
+      sources.push(winner.url)
+      parts.push(`Source: ${winner.url}\n${winner.content.slice(0, MAX_CHARS_PER_SOURCE)}`)
+    }
+
+    // Append search snippets from the other sources (free context we already have)
+    for (const item of items) {
+      const url = item.url ?? ''
+      if (!url || sources.includes(url)) continue
+      const snippet = (item.markdown ?? item.description ?? '').trim()
+      if (snippet) {
+        sources.push(url)
+        parts.push(`Source: ${url}\n${snippet}`)
       }
     }
 
@@ -117,7 +119,7 @@ export abstract class WikiService {
     log('info', 'firecrawl/search: returning result to ElevenLabs', {
       game,
       query,
-      timedOut,
+      timedOut: !winner,
       sourceCount: sources.length,
       sources,
       totalChars: parts.join('').length,
