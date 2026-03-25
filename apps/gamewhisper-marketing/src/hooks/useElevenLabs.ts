@@ -3,6 +3,7 @@ import { Conversation } from '@elevenlabs/client'
 import { setDoc, updateDoc, arrayUnion, doc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { auth } from '../lib/firebase'
 import { db } from '../lib/firebase'
+import { analytics } from '../lib/analytics'
 
 export type SessionStatus = 'idle' | 'connecting' | 'listening' | 'speaking' | 'searching' | 'error'
 
@@ -136,6 +137,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
     if (sessionId && messages.length > 0) {
       const uid = auth.currentUser?.uid ?? ''
       const endedAt = Date.now()
+      analytics.sessionEnded(gameNameRef.current, endedAt - startTimeRef.current, messages.length)
       if (uid) {
         setDoc(
           doc(db, 'users', uid, 'sessions', sessionId),
@@ -221,6 +223,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             setStatus('listening')
             startTimeRef.current = Date.now()
             toolCallsSeenRef.current = 0
+            analytics.sessionStarted(gameName)
 
             const watchUid = auth.currentUser?.uid
             if (watchUid && sessionId) {
@@ -231,7 +234,9 @@ export function useElevenLabs(): UseElevenLabsReturn {
                   const toolCalls = (snap.data()?.toolCalls ?? []) as Array<{ sources: string[] }>
                   if (toolCalls.length > toolCallsSeenRef.current) {
                     const latest = toolCalls[toolCalls.length - 1]
-                    setSourceCount(latest.sources?.length ?? 0)
+                    const count = latest.sources?.length ?? 0
+                    setSourceCount(count)
+                    analytics.searchCompleted(gameName, count)
                     toolCallsSeenRef.current = toolCalls.length
                   }
                 },
@@ -239,6 +244,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
             }
 
             timeoutRef.current = setTimeout(() => {
+              analytics.sessionTimedOut(gameName)
               setErrorMessage('Session timed out')
               setStatus('error')
               setSessionTimedOut(true)
@@ -277,6 +283,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
               const msg: Message = { role: 'user', content: message.message, timestamp: msgTimestamp }
               setUserTranscript(message.message)
               messagesRef.current.push(msg)
+              analytics.queryMade(gameName, messagesRef.current.filter(m => m.role === 'user').length)
               const currentUid = auth.currentUser?.uid
               const sid = sessionIdRef.current
               if (currentUid && sid) {
@@ -297,6 +304,7 @@ export function useElevenLabs(): UseElevenLabsReturn {
 
           onError: (error) => {
             const msg = typeof error === 'string' ? error : 'Connection error'
+            analytics.sessionError(gameName, msg)
             setErrorMessage(msg)
             setStatus('error')
             stopAmplitudeMonitor()

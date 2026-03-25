@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { auth } from './lib/firebase'
+import { analytics } from './lib/analytics'
 import { Overlay } from './components/Overlay'
 import { GameSelectModal } from './components/GameSelectModal'
 import Nav from './components/sections/Nav'
@@ -22,6 +23,10 @@ export default function App() {
   const [overlayMounted, setOverlayMounted] = useState(false)
 
   useEffect(() => {
+    analytics.pageViewed()
+  }, [])
+
+  useEffect(() => {
     console.log('[GameWhisper] Initializing anonymous auth...')
     return onAuthStateChanged(auth, (u) => {
       console.log('[GameWhisper] Auth state changed:', u ? `uid=${u.uid}` : 'null')
@@ -29,11 +34,15 @@ export default function App() {
     })
   }, [])
 
-  const openModal = useCallback(() => setModalOpen(true), [])
+  const openModal = useCallback((location: 'hero' | 'final_cta' = 'hero') => {
+    analytics.ctaClicked(location)
+    setModalOpen(true)
+  }, [])
 
   const closeModal = useCallback(() => setModalOpen(false), [])
 
   const handleGameSelect = useCallback((game: string) => {
+    analytics.gameSelected(game)
     setSelectedGame(game)
     setModalOpen(false)
     setOverlayMounted(true)
@@ -58,7 +67,7 @@ export default function App() {
         } else if (modalOpen) {
           closeModal()
         } else if (user) {
-          openModal()
+          openModal('hero')
         }
       }
     }
@@ -84,13 +93,13 @@ export default function App() {
     <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
       <Nav />
       <main>
-        <Hero onTryLive={user ? openModal : undefined} />
+        <Hero onTryLive={user ? () => openModal('hero') : undefined} />
         <PoweredBy />
         <Problem />
         <Demo />
         <Credibility />
         <FAQ />
-        <FinalCTA onTryLive={user ? openModal : undefined} />
+        <FinalCTA onTryLive={user ? () => openModal('final_cta') : undefined} />
       </main>
 
       {/* Dark backdrop */}
