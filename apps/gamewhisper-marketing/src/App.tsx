@@ -3,7 +3,6 @@ import Hero from './components/sections/Hero'
 import PoweredBy from './components/sections/PoweredBy'
 import Problem from './components/sections/Problem'
 import Demo from './components/sections/Demo'
-import WispSection from './components/sections/WispSection'
 import Credibility from './components/sections/Credibility'
 import FAQ from './components/sections/FAQ'
 import FinalCTA from './components/sections/FinalCTA'
@@ -17,7 +16,6 @@ export default function App() {
         <PoweredBy />
         <Problem />
         <Demo />
-        <WispSection />
         <Credibility />
         <FAQ />
         <FinalCTA />

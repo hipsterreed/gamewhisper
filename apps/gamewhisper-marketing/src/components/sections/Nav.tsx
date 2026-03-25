@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import logoVideo from '../../assets/gamewhisper_icon_animation.mp4'
+import elevenLabsLogo from '../../assets/elevenlabs-logo-white.png'
+import firecrawlLogo from '../../assets/firecrawl-wordmark-white.svg'
 
 export default function Nav() {
   const [scrolled, setScrolled] = useState(false)
@@ -45,6 +47,19 @@ export default function Nav() {
             Game Whisper
           </span>
         </a>
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Powered by
+          </span>
+          <a href="https://elevenlabs.io/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src={elevenLabsLogo} alt="ElevenLabs" style={{ height: 18, opacity: 0.6 }} />
+          </a>
+          <div style={{ width: 1, height: 16, background: 'rgba(255,255,255,0.15)' }} />
+          <a href="https://www.firecrawl.dev/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src={firecrawlLogo} alt="Firecrawl" style={{ height: 27, opacity: 0.6 }} />
+          </a>
+        </div>
       </div>
     </nav>
   )

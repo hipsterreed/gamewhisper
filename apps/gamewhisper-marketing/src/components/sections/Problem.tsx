@@ -29,65 +29,28 @@ export default function Problem() {
           </p>
         </motion.div>
 
-        {/* Split comparison visual */}
         <motion.div
           initial={{ opacity: 0, y: 32 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: 16,
-          }}
+          style={{ display: 'flex', justifyContent: 'center' }}
         >
-          {/* Before */}
-          <div style={{
-            background: 'rgba(239,68,68,0.04)',
-            border: '1px solid rgba(239,68,68,0.15)',
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(239,68,68,0.15)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
-              <span style={{ color: '#ef4444', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em' }}>THE OLD WAY</span>
-            </div>
-            <div
-              className="media-placeholder"
-              style={{
-                margin: 24,
-                aspectRatio: '4/3',
-                borderColor: 'rgba(239,68,68,0.2)',
-              }}
-            >
-              <span style={{ color: '#ef4444', opacity: 0.6 }}>Cluttered Alt-Tab Workflow Placeholder</span>
-              <span style={{ fontSize: 11, opacity: 0.4 }}>Browser tabs, wiki searches, broken focus</span>
-            </div>
-          </div>
-
-          {/* After */}
-          <div style={{
-            background: 'rgba(79,163,255,0.04)',
-            border: '1px solid rgba(79,163,255,0.15)',
-            borderRadius: 16,
-            overflow: 'hidden',
-          }}>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid rgba(79,163,255,0.15)', display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-blue)', boxShadow: '0 0 6px var(--color-blue)' }} />
-              <span style={{ color: 'var(--color-blue)', fontSize: 13, fontWeight: 600, letterSpacing: '0.04em' }}>WITH GAME WHISPER</span>
-            </div>
-            <div
-              className="media-placeholder"
-              style={{
-                margin: 24,
-                aspectRatio: '4/3',
-                borderColor: 'rgba(79,163,255,0.2)',
-              }}
-            >
-              <span style={{ color: 'var(--color-blue)', opacity: 0.6 }}>Gameplay Overlay Placeholder</span>
-              <span style={{ fontSize: 11, opacity: 0.4 }}>Game Whisper answering inside the game</span>
-            </div>
-          </div>
+          <video
+            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/google_search_animation_1-1.mp4?alt=media&token=ea3ccedd-6a92-49ce-b48b-4e718548fbeb"
+            autoPlay
+            loop
+            muted
+            playsInline
+            style={{
+              width: '50%',
+              display: 'block',
+              borderRadius: 16,
+              border: '1px solid rgba(255,255,255,0.08)',
+              boxShadow: '0 40px 80px rgba(0,0,0,0.5)',
+            }}
+          />
         </motion.div>
+
       </div>
     </section>
   )
