@@ -8,6 +8,7 @@ const MAX_CHARS_PER_SOURCE = 8_000
 const GAME_DOMAINS: Record<string, string[]> = {
   'Elden Ring': ['wiki.fextralife.com'],
   'Minecraft': ['minecraft.wiki'],
+  'Stardew Valley': ['stardewvalleywiki.com'],
   'Cyberpunk 2077': ['cyberpunk.fandom.com'],
   "Baldur's Gate 3": ['bg3.wiki'],
   'Dark Souls III': ['darksouls3.wiki.fextralife.com'],

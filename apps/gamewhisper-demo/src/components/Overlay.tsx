@@ -13,7 +13,7 @@ export function Overlay({ isOpen, agentId, onClose }: OverlayProps) {
 
   // Start session on mount, end on unmount
   useEffect(() => {
-    el.startSession('Minecraft', agentId)
+    el.startSession('', agentId)
     return () => {
       el.endSession()
     }
@@ -46,7 +46,7 @@ export function Overlay({ isOpen, agentId, onClose }: OverlayProps) {
             <span className="text-white/70 text-sm font-semibold tracking-tight">GameWhisper</span>
           </div>
           <div className="flex items-center gap-2">
-            <GameBadge game="Minecraft" />
+            <GameBadge game="Any game" />
             <button
               onClick={onClose}
               title="Close"

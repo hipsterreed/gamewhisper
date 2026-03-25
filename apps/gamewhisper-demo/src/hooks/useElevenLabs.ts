@@ -51,8 +51,8 @@ async function apiPost(path: string, body: unknown, token: string): Promise<void
   }
 }
 
-function pickGreeting(gameName: string): string {
-  return `I see you're playing ${gameName || 'a game'}, how can I help?`
+function pickGreeting(_gameName: string): string {
+  return `I see you want to try me out, what gaming question can I help you with?`
 }
 
 export function useElevenLabs(): UseElevenLabsReturn {

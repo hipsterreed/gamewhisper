@@ -5,14 +5,15 @@ import icon from '../assets/gamewhisper_icon_circle.png'
 interface OverlayProps {
   isOpen: boolean
   agentId: string
+  game: string
   onClose: () => void
 }
 
-export function Overlay({ isOpen, agentId, onClose }: OverlayProps) {
+export function Overlay({ isOpen, agentId, game, onClose }: OverlayProps) {
   const el = useElevenLabs()
 
   useEffect(() => {
-    el.startSession('Minecraft', agentId)
+    el.startSession(game, agentId)
     return () => {
       el.endSession()
     }
@@ -69,7 +70,7 @@ export function Overlay({ isOpen, agentId, onClose }: OverlayProps) {
               padding: '4px 12px',
               border: '1px solid rgba(59,130,246,0.3)',
             }}>
-              Minecraft
+              {game}
             </span>
             <button
               onClick={onClose}
