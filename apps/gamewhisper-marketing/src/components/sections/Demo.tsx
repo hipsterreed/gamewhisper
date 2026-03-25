@@ -37,7 +37,7 @@ export default function Demo() {
           style={{ position: 'relative' }}
         >
           <video
-            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_social_final.mp4?alt=media&token=5f9c86c1-3c03-455c-9a97-266ac34ea6af"
+            src="https://firebasestorage.googleapis.com/v0/b/gamewhisper-69fae.firebasestorage.app/o/gamewhisper_social_final_captions.mp4?alt=media&token=0db5e555-b896-4342-8898-a7984ed8c0d2"
             controls
             playsInline
             poster={coverImage}
