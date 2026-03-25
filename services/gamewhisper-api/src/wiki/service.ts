@@ -5,35 +5,15 @@ import { log } from '../lib/logger'
 const SEARCH_TIMEOUT_MS = 25_000
 const MAX_CHARS_PER_SOURCE = 8_000
 
-const GAME_DOMAINS: Record<string, string[]> = {
-  'Elden Ring': ['wiki.fextralife.com'],
-  'Minecraft': ['minecraft.wiki'],
-  'Stardew Valley': ['stardewvalleywiki.com'],
-  'Cyberpunk 2077': ['cyberpunk.fandom.com'],
-  "Baldur's Gate 3": ['bg3.wiki'],
-  'Dark Souls III': ['darksouls3.wiki.fextralife.com'],
-  'Dark Souls Remastered': ['darksouls.wiki.fextralife.com'],
-  'Sekiro: Shadows Die Twice': ['sekiroshadowsdietwice.wiki.fextralife.com'],
-  Bloodborne: ['bloodborne.wiki.fextralife.com'],
-  'God of War': ['godofwar.fandom.com'],
-  'The Witcher 3: Wild Hunt': ['witcher.fandom.com'],
-  'Hogwarts Legacy': ['hogwartslegacy.fandom.com'],
-}
-
 type WebResult = SearchResultWeb & Document
 
 export abstract class WikiService {
   private static fc = new FirecrawlApp({ apiKey: process.env.FIRECRAWL_API_KEY! })
 
   static async search(game: string, query: string): Promise<{ text: string; sources: string[] }> {
-    const domains = GAME_DOMAINS[game] ?? []
+    const req: Record<string, unknown> = { limit: 5 }
 
-    const req: Record<string, unknown> = { limit: 3 }
-    if (domains.length > 0) {
-      req.includeDomains = domains
-    }
-
-    log('info', 'firecrawl/search: starting', { game, query, domains, searchQuery: `${game} ${query}` })
+    log('info', 'firecrawl/search: starting', { game, query, searchQuery: `${game} ${query}` })
     const searchStart = Date.now()
 
     const timeout = new Promise<never>((_, reject) =>
