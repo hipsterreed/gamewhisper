@@ -1,5 +1,5 @@
 {
-  "name": "gamewhisper-marketing",
+  "name": "gamewhisper-demo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -12,7 +12,6 @@
   "dependencies": {
     "@elevenlabs/client": "^0.15.2",
     "firebase": "^12.11.0",
-    "framer-motion": "^12",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
   },

@@ -1,15 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { onAuthStateChanged, type User } from 'firebase/auth'
 import { auth } from './lib/firebase'
+import { GameBackground } from './components/GameBackground'
+import { HotkeyHint } from './components/HotkeyHint'
 import { Overlay } from './components/Overlay'
-import Nav from './components/sections/Nav'
-import Hero from './components/sections/Hero'
-import PoweredBy from './components/sections/PoweredBy'
-import Problem from './components/sections/Problem'
-import Demo from './components/sections/Demo'
-import Credibility from './components/sections/Credibility'
-import FAQ from './components/sections/FAQ'
-import FinalCTA from './components/sections/FinalCTA'
 
 const AGENT_ID = import.meta.env.VITE_ELEVENLABS_AGENT_ID ?? ''
 
@@ -19,11 +13,7 @@ export default function App() {
   const [overlayMounted, setOverlayMounted] = useState(false)
 
   useEffect(() => {
-    console.log('[GameWhisper] Initializing anonymous auth...')
-    return onAuthStateChanged(auth, (u) => {
-      console.log('[GameWhisper] Auth state changed:', u ? `uid=${u.uid}` : 'null')
-      setUser(u)
-    })
+    return onAuthStateChanged(auth, setUser)
   }, [])
 
   const openOverlay = useCallback(() => {
@@ -62,20 +52,19 @@ export default function App() {
   }, [overlayOpen, closeOverlay])
 
   return (
-    <div style={{ background: 'var(--color-bg)', minHeight: '100vh' }}>
-      <Nav />
-      <main>
-        <Hero onTryLive={user ? openOverlay : undefined} />
-        <PoweredBy />
-        <Problem />
-        <Demo />
-        <Credibility />
-        <FAQ />
-        <FinalCTA onTryLive={user ? openOverlay : undefined} />
-      </main>
+    <div className="relative w-full h-full overflow-hidden">
+      <GameBackground dimmed={overlayOpen} />
+
+      {!overlayOpen && (
+        <HotkeyHint onActivate={openOverlay} disabled={!user} />
+      )}
 
       {overlayMounted && (
-        <Overlay isOpen={overlayOpen} agentId={AGENT_ID} onClose={closeOverlay} />
+        <Overlay
+          isOpen={overlayOpen}
+          agentId={AGENT_ID}
+          onClose={closeOverlay}
+        />
       )}
     </div>
   )

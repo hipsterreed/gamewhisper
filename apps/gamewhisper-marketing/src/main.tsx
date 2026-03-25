@@ -1,10 +1,11 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { signInAnonymously } from 'firebase/auth'
+import { auth } from './lib/firebase'
 import './index.css'
 import App from './App.tsx'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+signInAnonymously(auth)
+  .then(() => console.log('[GameWhisper] signInAnonymously succeeded'))
+  .catch((err) => console.error('[GameWhisper] signInAnonymously failed:', err))
+
+createRoot(document.getElementById('root')!).render(<App />)

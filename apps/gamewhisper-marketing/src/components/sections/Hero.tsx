@@ -1,7 +1,11 @@
 import { motion } from 'framer-motion'
 import logoVideo from '../../assets/gamewhisper_icon_animation.mp4'
 
-export default function Hero() {
+interface HeroProps {
+  onTryLive?: () => void
+}
+
+export default function Hero({ onTryLive }: HeroProps) {
   return (
     <section
       style={{
@@ -106,6 +110,12 @@ export default function Hero() {
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1v9M4 7l4 4 4-4M2 13h12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
             Download for Windows
           </a>
+          {onTryLive && (
+            <button onClick={onTryLive} className="btn-secondary" style={{ fontSize: 16, padding: '14px 28px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" fill="currentColor" opacity="0.9" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+              Try it live
+            </button>
+          )}
           <a href="#demo" className="btn-secondary" style={{ fontSize: 16, padding: '14px 28px' }}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" /><path d="M6.5 5.5l5 2.5-5 2.5V5.5z" fill="currentColor" /></svg>
             Watch Demo
